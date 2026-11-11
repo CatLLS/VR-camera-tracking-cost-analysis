@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Custo do Rastreador</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="importmap">
+  {
+    "imports": {
+      "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+      "@mediapipe/tasks-vision": "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs"
+    }
+  }
+  </script>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+  <video id="cam" playsinline muted></video>
+
+  <div id="hud" hidden>
+    <span id="hud-text"></span>
+    <button id="btn-abort" type="button">Abortar</button>
+  </div>
+
+  <main id="panel">
+    <h1>Custo do rastreador</h1>
+    <p class="sub">Cena 3D + rastreador de pose na câmera, no mesmo aparelho. Mede o tempo de cada quadro.</p>
+
+    <section>
+      <h2>Execução</h2>
+      <label>Integrante <input id="owner" type="text" placeholder="nome" autocomplete="off"></label>
+      <label>Condição
+        <select id="condition">
+          <option value="off">Rastreador desligado</option>
+          <option value="480p">Câmera 640×480 + rastreador</option>
+          <option value="1080p">Câmera 1920×1080 + rastreador</option>
+        </select>
+      </label>
+      <label>Repetição nº <input id="rep" type="number" min="1" value="1"></label>
+      <label>Duração (s) <input id="duration" type="number" min="5" value="120"></label>
+      <label>Aquecimento descartado (s) <input id="warmup" type="number" min="0" value="5"></label>
+    </section>
+
+    <details>
+      <summary>Carga fixa (não mudar entre condições)</summary>
+      <label>Objetos na cena <input id="objects" type="number" min="1" value="3000"></label>
+      <label>Visão estéreo (Cardboard) <input id="stereo" type="checkbox" checked></label>
+      <label>Escala de pixels <input id="pixelRatio" type="number" min="0.25" max="4" step="0.25" value="1"></label>
+      <label>Modelo de pose
+        <select id="model">
+          <option value="lite">lite</option>
+          <option value="full">full</option>
+          <option value="heavy">heavy</option>
+        </select>
+      </label>
+      <label>Processamento do rastreador
+        <select id="delegate">
+          <option value="GPU">GPU</option>
+          <option value="CPU">CPU</option>
+        </select>
+      </label>
+      <label>Câmera
+        <select id="facing">
+          <option value="environment">traseira</option>
+          <option value="user">frontal</option>
+        </select>
+      </label>
+      <label>FPS pedido à câmera <input id="camFps" type="number" min="1" value="30"></label>
+    </details>
+
+    <div class="row">
+      <button id="btn-start" type="button" class="primary">Iniciar execução</button>
+    </div>
+    <p id="status" class="status"></p>
+
+    <section id="last" hidden>
+      <h2>Última execução</h2>
+      <table id="last-table"></table>
+      <div class="row">
+        <button id="btn-dl-last" type="button">Baixar CSV desta execução</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Execuções salvas</h2>
+      <table id="runs-table"></table>
+      <div class="row">
+        <button id="btn-dl-all" type="button">Baixar todas (CSV)</button>
+        <button id="btn-clear" type="button" class="danger">Apagar tudo</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

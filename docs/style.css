@@ -1,0 +1,129 @@
+:root {
+  --bg: #f6f7f9;
+  --fg: #1d2330;
+  --muted: #5d6675;
+  --card: #ffffff;
+  --line: #d9dde4;
+  --accent: #1f6feb;
+  --danger: #c62828;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #12151b;
+    --fg: #e6e9ef;
+    --muted: #9aa3b2;
+    --card: #1b2029;
+    --line: #2c3340;
+    --accent: #4c8dff;
+    --danger: #ef5350;
+  }
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+}
+
+#scene {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  display: none;
+  background: #000;
+}
+body.running #scene { display: block; }
+body.running #panel { display: none; }
+
+/* The video element must stay in the DOM and "visible" for some browsers to keep
+   delivering frames, so it is shrunk instead of hidden. */
+#cam {
+  position: fixed;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  left: 0;
+  top: 0;
+}
+
+#hud {
+  position: fixed;
+  top: env(safe-area-inset-top, 0);
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  font: 13px/1.3 ui-monospace, monospace;
+  z-index: 10;
+}
+#hud[hidden] { display: none; }
+
+#panel {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 16px 16px 48px;
+}
+h1 { font-size: 1.4rem; margin: 8px 0 4px; }
+h2 { font-size: 1.05rem; margin: 0 0 10px; }
+.sub { color: var(--muted); margin: 0 0 16px; }
+
+section, details {
+  background: var(--card);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+details summary { cursor: pointer; font-weight: 600; margin-bottom: 4px; }
+details[open] summary { margin-bottom: 10px; }
+
+label {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin: 8px 0;
+}
+input[type="text"], input[type="number"], select {
+  width: 55%;
+  padding: 7px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--bg);
+  color: var(--fg);
+  font: inherit;
+}
+input[type="checkbox"] { width: 22px; height: 22px; }
+
+.row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+button {
+  flex: 1 1 auto;
+  padding: 11px 14px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--card);
+  color: var(--fg);
+  font: inherit;
+  font-weight: 600;
+}
+button.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+button.danger { color: var(--danger); }
+button:disabled { opacity: 0.5; }
+#hud button { flex: 0 0 auto; padding: 4px 10px; font-size: 12px; background: #333; color: #fff; border-color: #555; }
+
+.status { color: var(--muted); min-height: 1.4em; white-space: pre-line; }
+.status.error { color: var(--danger); }
+
+table { width: 100%; border-collapse: collapse; font-size: 13px; }
+th, td { text-align: left; padding: 5px 4px; border-bottom: 1px solid var(--line); }
+td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+.table-scroll { overflow-x: auto; }
