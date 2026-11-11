@@ -7,7 +7,7 @@
 
 import * as THREE from 'three';
 
-const APP_VERSION = '1.0.0';
+const APP_VERSION = '1.0.1';
 const MP_VERSION = '0.10.14';
 const MP_WASM = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}/wasm`;
 const MODEL_URL = (v) =>
@@ -28,7 +28,7 @@ const ui = {
   stereo: $('stereo'), pixelRatio: $('pixelRatio'), model: $('model'),
   delegate: $('delegate'), facing: $('facing'), camFps: $('camFps'),
   start: $('btn-start'), abort: $('btn-abort'), status: $('status'),
-  hud: $('hud'), hudText: $('hud-text'), canvas: $('scene'), video: $('cam'),
+  hud: $('hud'), hudText: $('hud-text'), video: $('cam'),
   last: $('last'), lastTable: $('last-table'), dlLast: $('btn-dl-last'),
   runsTable: $('runs-table'), dlAll: $('btn-dl-all'), clear: $('btn-clear'),
 };
@@ -112,7 +112,13 @@ function mulberry32(seed) {
   };
 }
 
-function buildScene(canvas, cfg) {
+function buildScene(cfg) {
+  // Um canvas novo a cada execução: o contexto WebGL da execução anterior é
+  // descartado com forceContextLoss() e não pode ser reaproveitado.
+  const canvas = document.createElement('canvas');
+  canvas.id = 'scene';
+  document.getElementById('scene')?.remove();
+  document.body.prepend(canvas);
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
   renderer.setPixelRatio(cfg.pixelRatio);
 
@@ -197,6 +203,7 @@ function buildScene(canvas, cfg) {
     mesh.dispose();
     renderer.dispose();
     renderer.forceContextLoss();
+    canvas.remove();
   }
 
   return { render, dispose, renderer };
@@ -376,7 +383,7 @@ async function runOnce() {
     ui.hud.hidden = false;
     await nextFrame();
     await nextFrame();
-    world = buildScene(ui.canvas, cfg);
+    world = buildScene(cfg);
 
     const batteryStart = await batteryInfo();
     const cap = Math.ceil(cfg.duration * MAX_FPS_BUFFER) + 10;
