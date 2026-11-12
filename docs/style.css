@@ -38,18 +38,6 @@ body {
 body.running #scene { display: block; }
 body.running #panel { display: none; }
 
-/* The video element must stay in the DOM and "visible" for some browsers to keep
-   delivering frames, so it is shrunk instead of hidden. */
-#cam {
-  position: fixed;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-  left: 0;
-  top: 0;
-}
-
 #hud {
   position: fixed;
   top: env(safe-area-inset-top, 0);
@@ -119,6 +107,17 @@ button.primary { background: var(--accent); border-color: var(--accent); color: 
 button.danger { color: var(--danger); }
 button:disabled { opacity: 0.5; }
 #hud button { flex: 0 0 auto; padding: 4px 10px; font-size: 12px; background: #333; color: #fff; border-color: #555; }
+
+fieldset {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin: 10px 0;
+  padding: 4px 10px;
+}
+fieldset:disabled { opacity: 0.45; }
+legend { color: var(--muted); font-size: 13px; padding: 0 4px; }
+.cond { margin: 10px 0 4px; }
+.hint { color: var(--muted); font-size: 13px; margin: 4px 0 0; }
 
 .status { color: var(--muted); min-height: 1.4em; white-space: pre-line; }
 .status.error { color: var(--danger); }

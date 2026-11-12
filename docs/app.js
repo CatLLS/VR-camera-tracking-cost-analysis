@@ -1,34 +1,36 @@
-// Custo do rastreador — mede o tempo de quadro de uma cena 3D com e sem
-// rastreador de pose (MediaPipe) rodando na câmera do mesmo aparelho.
+// Custo do rastreamento AR — mede o tempo de quadro de uma cena 3D com e sem o
+// rastreamento de posição do ARCore (sessão WebXR "immersive-ar" do Chrome).
 //
 // Cada execução grava, por quadro: intervalo desde o quadro anterior (frame_ms),
-// tempo gasto no callback (work_ms) e, quando o rastreador rodou, quanto ele levou
-// (inference_ms). Nada é estimado: todo número sai do próprio aparelho.
+// tempo gasto no callback (work_ms), tempo gasto lendo os recursos extras do ARCore
+// (feature_ms) e o estado do rastreamento. Nada é estimado: todo número sai do
+// próprio aparelho.
 
 import * as THREE from 'three';
 
-const APP_VERSION = '1.0.1';
-const MP_VERSION = '0.10.14';
-const MP_WASM = `https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@${MP_VERSION}/wasm`;
-const MODEL_URL = (v) =>
-  `https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_${v}/float16/1/pose_landmarker_${v}.task`;
+const APP_VERSION = '2.0.0-ar';
 
-const CONDITIONS = {
-  off: null,
-  '480p': { width: 640, height: 480 },
-  '1080p': { width: 1920, height: 1080 },
+// Recursos extras do ARCore que a página sabe pedir e exercitar a cada quadro.
+const FEATURES = {
+  hit: { xr: 'hit-test', label: 'hit-test' },
+  light: { xr: 'light-estimation', label: 'luz' },
+  depth: { xr: 'depth-sensing', label: 'depth' },
+};
+const DEPTH_INIT = {
+  usagePreference: ['cpu-optimized'],
+  dataFormatPreference: ['luminance-alpha', 'float32'],
 };
 
 const MAX_FPS_BUFFER = 250; // quadros por segundo reservados (cobre telas de 240 Hz)
 
 const $ = (id) => document.getElementById(id);
 const ui = {
-  owner: $('owner'), condition: $('condition'), rep: $('rep'),
-  duration: $('duration'), warmup: $('warmup'), objects: $('objects'),
-  stereo: $('stereo'), pixelRatio: $('pixelRatio'), model: $('model'),
-  delegate: $('delegate'), facing: $('facing'), camFps: $('camFps'),
-  start: $('btn-start'), abort: $('btn-abort'), status: $('status'),
-  hud: $('hud'), hudText: $('hud-text'), video: $('cam'),
+  owner: $('owner'), mode: $('mode'), featHit: $('feat-hit'), featLight: $('feat-light'),
+  featDepth: $('feat-depth'), arFeatures: $('ar-features'), condLabel: $('cond-label'),
+  rep: $('rep'), duration: $('duration'), warmup: $('warmup'), objects: $('objects'),
+  locked: $('locked'), start: $('btn-start'), probe: $('btn-probe'), abort: $('btn-abort'),
+  status: $('status'), hud: $('hud'), hudText: $('hud-text'),
+  probeBox: $('probe'), probeTable: $('probe-table'),
   last: $('last'), lastTable: $('last-table'), dlLast: $('btn-dl-last'),
   runsTable: $('runs-table'), dlAll: $('btn-dl-all'), clear: $('btn-clear'),
 };
@@ -36,12 +38,12 @@ const ui = {
 // ---------------------------------------------------------------------------
 // Preferências locais (só conveniência: lembra os campos entre aberturas)
 
-const PREF_FIELDS = ['owner', 'condition', 'rep', 'duration', 'warmup', 'objects',
-  'stereo', 'pixelRatio', 'model', 'delegate', 'facing', 'camFps'];
+const PREF_FIELDS = ['owner', 'mode', 'featHit', 'featLight', 'featDepth', 'rep',
+  'duration', 'warmup', 'objects', 'locked'];
 
 function loadPrefs() {
   try {
-    const p = JSON.parse(localStorage.getItem('prefs') || '{}');
+    const p = JSON.parse(localStorage.getItem('prefs-ar') || '{}');
     for (const k of PREF_FIELDS) {
       if (!(k in p)) continue;
       if (ui[k].type === 'checkbox') ui[k].checked = p[k];
@@ -54,7 +56,7 @@ function savePrefs() {
   try {
     const p = {};
     for (const k of PREF_FIELDS) p[k] = ui[k].type === 'checkbox' ? ui[k].checked : ui[k].value;
-    localStorage.setItem('prefs', JSON.stringify(p));
+    localStorage.setItem('prefs-ar', JSON.stringify(p));
   } catch { /* ignora */ }
 }
 
@@ -67,7 +69,7 @@ const store = {
   async open() {
     try {
       this.db = await new Promise((resolve, reject) => {
-        const req = indexedDB.open('custo-rastreador', 1);
+        const req = indexedDB.open('custo-rastreamento-ar', 1);
         req.onupgradeneeded = () => req.result.createObjectStore('runs', { keyPath: 'id' });
         req.onsuccess = () => resolve(req.result);
         req.onerror = () => reject(req.error);
@@ -112,60 +114,68 @@ function mulberry32(seed) {
   };
 }
 
-function buildScene(cfg) {
-  // Um canvas novo a cada execução: o contexto WebGL da execução anterior é
-  // descartado com forceContextLoss() e não pode ser reaproveitado.
+// xr = true monta o renderizador para a sessão WebXR (fundo transparente: atrás
+// da cena aparece a imagem da câmera, desenhada pelo próprio Chrome).
+function buildScene(cfg, xr) {
+  // Um canvas novo a cada execução: o contexto WebGL anterior é descartado.
   const canvas = document.createElement('canvas');
   canvas.id = 'scene';
   document.getElementById('scene')?.remove();
   document.body.prepend(canvas);
-  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-  renderer.setPixelRatio(cfg.pixelRatio);
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: xr, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(window.devicePixelRatio); // resolução nativa, como na sessão AR
+  if (xr) {
+    renderer.xr.enabled = true;
+    renderer.xr.setReferenceSpaceType('local');
+  }
 
   const scene = new THREE.Scene();
-  scene.background = new THREE.Color(0x101418);
+  scene.background = xr ? null : new THREE.Color(0x101418);
   scene.add(new THREE.HemisphereLight(0xffffff, 0x334455, 0.9));
   const sun = new THREE.DirectionalLight(0xffffff, 1.4);
   sun.position.set(5, 10, 7);
   scene.add(sun);
 
-  const camera = new THREE.PerspectiveCamera(70, 1, 0.1, 200);
-  const stereoCam = new THREE.StereoCamera();
+  const camera = new THREE.PerspectiveCamera(60, 1, 0.05, 100);
+  scene.add(camera);
 
   const n = cfg.objects;
-  const geo = new THREE.IcosahedronGeometry(0.35, 2);
+  const geo = new THREE.IcosahedronGeometry(0.08, 2);
   const mat = new THREE.MeshStandardMaterial({ roughness: 0.4, metalness: 0.2 });
-  const mesh = new THREE.InstancedMesh(geo, mat, n);
+  const mesh = new THREE.InstancedMesh(geo, mat, Math.max(1, n));
+  mesh.count = n;
+  mesh.frustumCulled = false; // a nuvem inteira é desenhada em todo quadro
   const rand = mulberry32(42);
   const base = new Float32Array(n * 3);
   const spin = new Float32Array(n);
   const color = new THREE.Color();
   for (let i = 0; i < n; i++) {
-    // Distribui os objetos numa casca esférica em volta da câmera.
-    const r = 4 + rand() * 10;
-    const th = rand() * Math.PI * 2;
-    const ph = Math.acos(2 * rand() - 1);
-    base[i * 3] = r * Math.sin(ph) * Math.cos(th);
-    base[i * 3 + 1] = r * Math.cos(ph);
-    base[i * 3 + 2] = r * Math.sin(ph) * Math.sin(th);
+    // Nuvem de objetos à frente da câmera, entre 0,5 m e 4 m de distância,
+    // espalhada dentro do campo de visão.
+    const z = -(0.5 + rand() * 3.5);
+    base[i * 3] = (rand() * 2 - 1) * 0.45 * -z;
+    base[i * 3 + 1] = (rand() * 2 - 1) * 0.8 * -z;
+    base[i * 3 + 2] = z;
     spin[i] = 0.5 + rand() * 2;
     mesh.setColorAt(i, color.setHSL(rand(), 0.6, 0.55));
   }
-  scene.add(mesh);
+  // Presa à câmera: os objetos são filhos da câmera e acompanham o celular.
+  // Solta: ficam no espaço do ambiente, à frente de onde a sessão começou.
+  if (cfg.locked) camera.add(mesh);
+  else scene.add(mesh);
   const dummy = new THREE.Object3D();
 
   function resize() {
-    const w = window.innerWidth;
-    const h = window.innerHeight;
-    renderer.setSize(w, h, false);
-    camera.aspect = cfg.stereo ? (w / 2) / h : w / h;
+    if (renderer.xr.isPresenting) return;
+    renderer.setSize(window.innerWidth, window.innerHeight, false);
+    camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
   }
   resize();
   window.addEventListener('resize', resize);
 
-  // tSec é o tempo desde o início da execução: o conteúdo de cada quadro depende
-  // só do relógio, então todas as execuções mostram a mesma coisa.
+  // tSec é o tempo desde o início da execução: a animação depende só do relógio.
   function render(tSec) {
     for (let i = 0; i < n; i++) {
       dummy.position.set(base[i * 3], base[i * 3 + 1], base[i * 3 + 2]);
@@ -174,30 +184,15 @@ function buildScene(cfg) {
       mesh.setMatrixAt(i, dummy.matrix);
     }
     mesh.instanceMatrix.needsUpdate = true;
-
-    camera.position.set(Math.sin(tSec * 0.2) * 1.5, Math.sin(tSec * 0.3) * 0.5, Math.cos(tSec * 0.2) * 1.5);
-    camera.lookAt(Math.sin(tSec * 0.15) * 10, 0, Math.cos(tSec * 0.15) * 10);
-
-    if (cfg.stereo) {
-      const size = renderer.getSize(new THREE.Vector2());
-      const half = size.x / 2;
-      camera.updateMatrixWorld();
-      stereoCam.update(camera);
-      renderer.setScissorTest(true);
-      renderer.setScissor(0, 0, half, size.y);
-      renderer.setViewport(0, 0, half, size.y);
-      renderer.render(scene, stereoCam.cameraL);
-      renderer.setScissor(half, 0, half, size.y);
-      renderer.setViewport(half, 0, half, size.y);
-      renderer.render(scene, stereoCam.cameraR);
-      renderer.setScissorTest(false);
-    } else {
-      renderer.render(scene, camera);
-    }
+    // O three.js atualiza a posição dos filhos da câmera antes de aplicar a pose
+    // do AR; aplicar a pose antes evita que a cena presa fique um quadro atrasada.
+    if (renderer.xr.isPresenting) renderer.xr.updateCamera(camera);
+    renderer.render(scene, camera);
   }
 
   function dispose() {
     window.removeEventListener('resize', resize);
+    renderer.setAnimationLoop(null);
     geo.dispose();
     mat.dispose();
     mesh.dispose();
@@ -210,47 +205,60 @@ function buildScene(cfg) {
 }
 
 // ---------------------------------------------------------------------------
-// Rastreador: câmera + MediaPipe Pose Landmarker
+// Sessão AR (ARCore via WebXR)
 
-let visionModule = null;
-let visionFileset = null;
-
-async function loadVision() {
-  if (!visionModule) visionModule = await import('@mediapipe/tasks-vision');
-  if (!visionFileset) visionFileset = await visionModule.FilesetResolver.forVisionTasks(MP_WASM);
-  return visionModule;
+function sessionInit(featureKeys, required) {
+  const xrNames = featureKeys.map((k) => FEATURES[k].xr);
+  const init = {
+    requiredFeatures: ['local', ...(required ? xrNames : [])],
+    optionalFeatures: ['dom-overlay', ...(required ? [] : xrNames)],
+    domOverlay: { root: ui.hud },
+  };
+  if (featureKeys.includes('depth')) init.depthSensing = DEPTH_INIT;
+  return init;
 }
 
-async function startTracker(cfg) {
-  const res = CONDITIONS[cfg.condition];
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: false,
-    video: {
-      facingMode: cfg.facing,
-      width: { ideal: res.width },
-      height: { ideal: res.height },
-      frameRate: { ideal: cfg.camFps },
-    },
-  });
-  const video = ui.video;
-  video.srcObject = stream;
-  await video.play();
-  const settings = stream.getVideoTracks()[0].getSettings();
+function describeSession(session) {
+  let enabled = '';
+  try { enabled = session.enabledFeatures ? [...session.enabledFeatures].join(' ') : 'desconhecido'; } catch { enabled = 'desconhecido'; }
+  let depthUsage = '';
+  let depthFormat = '';
+  try { depthUsage = session.depthUsage || ''; depthFormat = session.depthDataFormat || ''; } catch { /* sem depth */ }
+  let frameRate = '';
+  try { frameRate = session.frameRate ?? ''; } catch { /* não exposto */ }
+  let fbW = '';
+  let fbH = '';
+  try {
+    const layer = session.renderState.baseLayer;
+    fbW = layer.framebufferWidth;
+    fbH = layer.framebufferHeight;
+  } catch { /* sem camada ainda */ }
+  return { enabled, depthUsage, depthFormat, frameRate, fbW, fbH };
+}
 
-  const vision = await loadVision();
-  const landmarker = await vision.PoseLandmarker.createFromOptions(visionFileset, {
-    baseOptions: { modelAssetPath: MODEL_URL(cfg.model), delegate: cfg.delegate },
-    runningMode: 'VIDEO',
-    numPoses: 1,
-  });
-
-  function stop() {
-    try { landmarker.close(); } catch { /* ignora */ }
-    for (const t of stream.getTracks()) t.stop();
-    video.srcObject = null;
+// Prepara o que cada recurso extra precisa e devolve a função que o exercita
+// num quadro. Os recursos só custam algo para o ARCore se a página os usar.
+async function prepareFeatures(session, featureKeys) {
+  const ctx = { hitSource: null, lightProbe: null, depth: featureKeys.includes('depth') };
+  if (featureKeys.includes('hit')) {
+    const viewer = await session.requestReferenceSpace('viewer');
+    ctx.hitSource = await session.requestHitTestSource({ space: viewer });
   }
-
-  return { video, landmarker, settings, stop };
+  if (featureKeys.includes('light')) {
+    ctx.lightProbe = await session.requestLightProbe();
+  }
+  return function exercise(frame, pose) {
+    let hits = 0;
+    if (ctx.hitSource) hits = frame.getHitTestResults(ctx.hitSource).length;
+    if (ctx.lightProbe) frame.getLightEstimate(ctx.lightProbe);
+    if (ctx.depth && pose) {
+      for (const view of pose.views) {
+        const d = frame.getDepthInformation(view);
+        if (d) d.getDepthInMeters(0.5, 0.5);
+      }
+    }
+    return hits;
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -281,21 +289,19 @@ function summarize(run) {
   const f = run.frames;
   const warmMs = run.meta.warmup_s * 1000;
   const frameMs = [];
-  const infMs = [];
-  let trackerFrames = 0;
-  let poseFrames = 0;
+  const featMs = [];
+  let full = 0;
+  let counted = 0;
   for (let i = 0; i < f.n; i++) {
     if (f.t_ms[i] < warmMs) continue;
     frameMs.push(f.frame_ms[i]);
-    if (f.tracker_ran[i]) {
-      trackerFrames++;
-      infMs.push(f.inference_ms[i]);
-      if (f.poses[i] > 0) poseFrames++;
-    }
+    featMs.push(f.feature_ms[i]);
+    counted++;
+    if (f.tracking[i] === 2) full++;
   }
   const ft = stats(frameMs);
-  const inf = stats(infMs);
-  const measuredS = Math.max(0, f.n ? (f.t_ms[f.n - 1] - warmMs) / 1000 : 0);
+  const fe = stats(featMs);
+  const isAr = run.meta.mode === 'ar';
   return {
     frames_measured: ft.n,
     frame_mean_ms: ft.mean,
@@ -304,11 +310,9 @@ function summarize(run) {
     frame_p99_ms: ft.p99,
     frame_max_ms: ft.max,
     fps_mean: ft.mean ? 1000 / ft.mean : NaN,
-    tracker_runs: trackerFrames,
-    tracker_hz: measuredS ? trackerFrames / measuredS : NaN,
-    inference_mean_ms: inf.mean,
-    inference_p95_ms: inf.p95,
-    pose_detected_ratio: trackerFrames ? poseFrames / trackerFrames : NaN,
+    feature_mean_ms: fe.mean,
+    feature_p95_ms: fe.p95,
+    tracking_full_ratio: isAr && counted ? full / counted : NaN,
   };
 }
 
@@ -317,20 +321,32 @@ function summarize(run) {
 
 let abortRequested = false;
 
+function selectedFeatures() {
+  const keys = [];
+  if (ui.featHit.checked) keys.push('hit');
+  if (ui.featLight.checked) keys.push('light');
+  if (ui.featDepth.checked) keys.push('depth');
+  return keys;
+}
+
+function conditionLabel(mode, featureKeys) {
+  if (mode !== 'ar') return 'sem-ar';
+  return ['ar', ...featureKeys.map((k) => FEATURES[k].label)].join('+');
+}
+
 function readConfig() {
+  const mode = ui.mode.value;
+  const features = mode === 'ar' ? selectedFeatures() : [];
   return {
     owner: ui.owner.value.trim(),
-    condition: ui.condition.value,
+    mode,
+    features,
+    condition: conditionLabel(mode, features),
     rep: parseInt(ui.rep.value, 10) || 1,
     duration: Math.max(5, parseFloat(ui.duration.value) || 120),
     warmup: Math.max(0, parseFloat(ui.warmup.value) || 0),
-    objects: Math.max(1, parseInt(ui.objects.value, 10) || 3000),
-    stereo: ui.stereo.checked,
-    pixelRatio: parseFloat(ui.pixelRatio.value) || 1,
-    model: ui.model.value,
-    delegate: ui.delegate.value,
-    facing: ui.facing.value,
-    camFps: parseFloat(ui.camFps.value) || 30,
+    objects: Math.max(0, parseInt(ui.objects.value, 10) || 0),
+    locked: ui.locked.checked,
   };
 }
 
@@ -346,6 +362,19 @@ async function batteryInfo() {
 
 const nextFrame = () => new Promise((r) => requestAnimationFrame(r));
 
+function newFrameBuffers(cap) {
+  return {
+    n: 0,
+    t_ms: new Float64Array(cap),
+    epoch_ms: new Float64Array(cap),
+    frame_ms: new Float64Array(cap),
+    work_ms: new Float64Array(cap),
+    feature_ms: new Float64Array(cap),
+    tracking: new Uint8Array(cap),
+    hits: new Uint16Array(cap),
+  };
+}
+
 async function runOnce() {
   const cfg = readConfig();
   if (!cfg.owner) {
@@ -355,75 +384,68 @@ async function runOnce() {
   savePrefs();
   abortRequested = false;
   ui.start.disabled = true;
+  ui.probe.disabled = true;
 
-  // Tela cheia precisa do clique do usuário, então vem antes de qualquer espera.
-  let fullscreen = false;
-  try {
-    await document.documentElement.requestFullscreen({ navigationUI: 'hide' });
-    fullscreen = true;
-    if (cfg.stereo) await screen.orientation.lock('landscape').catch(() => {});
-  } catch { /* segue sem tela cheia */ }
-
-  let tracker = null;
+  let session = null;
   let world = null;
   let wakeLock = null;
   let pageHidden = 0;
+  let sessionInfo = { enabled: '', depthUsage: '', depthFormat: '', frameRate: '', fbW: '', fbH: '' };
   const onVisibility = () => { if (document.hidden) pageHidden++; };
+  ui.hud.hidden = false;
 
   try {
-    if (CONDITIONS[cfg.condition]) {
-      setStatus('Abrindo câmera e carregando o modelo…');
-      tracker = await startTracker(cfg);
+    // A sessão AR (e a tela cheia) precisam do toque do usuário: vêm antes de
+    // qualquer outra espera.
+    if (cfg.mode === 'ar') {
+      session = await navigator.xr.requestSession('immersive-ar', sessionInit(cfg.features, true));
+    } else {
+      await document.documentElement.requestFullscreen({ navigationUI: 'hide' }).catch(() => {});
     }
 
     try { wakeLock = await navigator.wakeLock?.request('screen'); } catch { /* opcional */ }
     document.addEventListener('visibilitychange', onVisibility);
-
     document.body.classList.add('running');
-    ui.hud.hidden = false;
     await nextFrame();
-    await nextFrame();
-    world = buildScene(cfg);
+
+    world = buildScene(cfg, cfg.mode === 'ar');
+    let exercise = null;
+    if (session) {
+      await world.renderer.xr.setSession(session);
+      exercise = await prepareFeatures(session, cfg.features);
+      sessionInfo = describeSession(session);
+    }
 
     const batteryStart = await batteryInfo();
     const cap = Math.ceil(cfg.duration * MAX_FPS_BUFFER) + 10;
-    const f = {
-      n: 0,
-      t_ms: new Float64Array(cap),
-      epoch_ms: new Float64Array(cap),
-      frame_ms: new Float64Array(cap),
-      work_ms: new Float64Array(cap),
-      tracker_ran: new Uint8Array(cap),
-      inference_ms: new Float64Array(cap),
-      poses: new Uint8Array(cap),
-    };
+    const f = newFrameBuffers(cap);
     const durationMs = cfg.duration * 1000;
+    let endedByUser = false;
 
     await new Promise((resolve) => {
       let startTs = null;
       let prevTs = null;
-      let lastVideoTime = -1;
       let lastHud = 0;
       let hudFrames = 0;
+      let done = false;
+      const finish = () => { if (!done) { done = true; resolve(); } };
+      if (session) session.addEventListener('end', () => { endedByUser = true; finish(); });
 
-      function frame(ts) {
+      function frame(ts, xrFrame) {
+        if (done) return;
         const w0 = performance.now();
         if (startTs === null) startTs = ts;
         const t = ts - startTs;
 
-        let ran = 0;
-        let infMs = NaN;
-        let poses = 0;
-        if (tracker) {
-          const v = tracker.video;
-          if (v.readyState >= 2 && v.currentTime !== lastVideoTime) {
-            lastVideoTime = v.currentTime;
-            const i0 = performance.now();
-            const result = tracker.landmarker.detectForVideo(v, i0);
-            infMs = performance.now() - i0;
-            ran = 1;
-            poses = result.landmarks ? result.landmarks.length : 0;
-          }
+        let tracking = 0;
+        let hits = 0;
+        let featMs = 0;
+        if (xrFrame) {
+          const pose = xrFrame.getViewerPose(world.renderer.xr.getReferenceSpace());
+          tracking = !pose ? 0 : pose.emulatedPosition ? 1 : 2;
+          const f0 = performance.now();
+          hits = exercise(xrFrame, pose);
+          featMs = performance.now() - f0;
         }
 
         world.render(t / 1000);
@@ -434,9 +456,9 @@ async function runOnce() {
           f.epoch_ms[i] = performance.timeOrigin + ts;
           f.frame_ms[i] = prevTs === null ? NaN : ts - prevTs;
           f.work_ms[i] = performance.now() - w0;
-          f.tracker_ran[i] = ran;
-          f.inference_ms[i] = infMs;
-          f.poses[i] = poses;
+          f.feature_ms[i] = featMs;
+          f.tracking[i] = tracking;
+          f.hits[i] = Math.min(hits, 65535);
           f.n++;
         }
         prevTs = ts;
@@ -445,24 +467,31 @@ async function runOnce() {
         if (ts - lastHud >= 500) {
           const fps = (hudFrames * 1000) / (ts - lastHud || 1);
           const phase = t < cfg.warmup * 1000 ? 'aquecendo' : 'medindo';
+          const track = xrFrame ? ` · rastreio ${['perdido', 'só rotação', 'ok'][tracking]}` : '';
           ui.hudText.textContent =
-            `${cfg.condition} · rep ${cfg.rep} · ${phase} ${(t / 1000).toFixed(0)}/${cfg.duration}s · ${fps.toFixed(0)} fps` +
-            (tracker ? ` · rastreador ${Number.isFinite(infMs) ? infMs.toFixed(1) + ' ms' : '…'}` : '');
+            `${cfg.condition} · rep ${cfg.rep} · ${phase} ${(t / 1000).toFixed(0)}/${cfg.duration}s · ${fps.toFixed(0)} fps${track}`;
           lastHud = ts;
           hudFrames = 0;
         }
 
-        if (t >= durationMs || abortRequested || i >= cap) resolve();
-        else requestAnimationFrame(frame);
+        if (t >= durationMs || abortRequested || i >= cap) finish();
+        else if (!session) requestAnimationFrame(frame);
       }
-      requestAnimationFrame(frame);
+
+      // Na sessão AR quem dita o ritmo dos quadros é o WebXR (setAnimationLoop).
+      if (session) world.renderer.setAnimationLoop(frame);
+      else requestAnimationFrame(frame);
     });
 
+    world.renderer.setAnimationLoop(null);
+    if (session && !endedByUser) await session.end().catch(() => {});
+
     const batteryEnd = await batteryInfo();
-    const cam = tracker ? tracker.settings : {};
     const size = world.renderer.getDrawingBufferSize(new THREE.Vector2());
     const startEpoch = f.n ? f.epoch_ms[0] : Date.now();
     const id = `${new Date(startEpoch).toISOString().replace(/[:.]/g, '-')}_${cfg.condition}_r${cfg.rep}`;
+    const lastT = f.n ? f.t_ms[f.n - 1] : 0;
+    const aborted = abortRequested || (endedByUser && lastT < durationMs);
 
     const run = {
       id,
@@ -470,36 +499,31 @@ async function runOnce() {
         run_id: id,
         owner: cfg.owner,
         condition: cfg.condition,
+        mode: cfg.mode,
+        features_requested: cfg.features.map((k) => FEATURES[k].xr).join(' '),
+        features_enabled: sessionInfo.enabled,
+        depth_usage: sessionInfo.depthUsage,
+        depth_format: sessionInfo.depthFormat,
+        xr_frame_rate: sessionInfo.frameRate,
         rep: cfg.rep,
         duration_s: cfg.duration,
         warmup_s: cfg.warmup,
         objects: cfg.objects,
-        stereo: cfg.stereo ? 1 : 0,
-        pixel_ratio: cfg.pixelRatio,
-        canvas_w: size.x,
-        canvas_h: size.y,
+        locked_to_camera: cfg.locked ? 1 : 0,
+        // Na sessão AR a cena é desenhada no framebuffer do WebXR, não no canvas.
+        render_w: cfg.mode === 'ar' ? sessionInfo.fbW : size.x,
+        render_h: cfg.mode === 'ar' ? sessionInfo.fbH : size.y,
         device_pixel_ratio: window.devicePixelRatio,
-        model: CONDITIONS[cfg.condition] ? cfg.model : '',
-        delegate: CONDITIONS[cfg.condition] ? cfg.delegate : '',
-        facing: CONDITIONS[cfg.condition] ? cfg.facing : '',
-        cam_req_w: CONDITIONS[cfg.condition]?.width ?? '',
-        cam_req_h: CONDITIONS[cfg.condition]?.height ?? '',
-        cam_req_fps: CONDITIONS[cfg.condition] ? cfg.camFps : '',
-        cam_w: cam.width ?? '',
-        cam_h: cam.height ?? '',
-        cam_fps: cam.frameRate ?? '',
         start_epoch_ms: Math.round(startEpoch),
         end_epoch_ms: Math.round(f.n ? f.epoch_ms[f.n - 1] : Date.now()),
         battery_start: batteryStart.level,
         battery_end: batteryEnd.level,
         charging_start: batteryStart.charging,
         charging_end: batteryEnd.charging,
-        aborted: abortRequested ? 1 : 0,
+        aborted: aborted ? 1 : 0,
         page_hidden: pageHidden,
-        fullscreen: fullscreen ? 1 : 0,
         user_agent: navigator.userAgent,
         app_version: APP_VERSION,
-        mediapipe_version: MP_VERSION,
       },
       frames: {
         n: f.n,
@@ -507,9 +531,9 @@ async function runOnce() {
         epoch_ms: f.epoch_ms.slice(0, f.n),
         frame_ms: f.frame_ms.slice(0, f.n),
         work_ms: f.work_ms.slice(0, f.n),
-        tracker_ran: f.tracker_ran.slice(0, f.n),
-        inference_ms: f.inference_ms.slice(0, f.n),
-        poses: f.poses.slice(0, f.n),
+        feature_ms: f.feature_ms.slice(0, f.n),
+        tracking: f.tracking.slice(0, f.n),
+        hits: f.hits.slice(0, f.n),
       },
     };
     run.summary = summarize(run);
@@ -517,37 +541,104 @@ async function runOnce() {
     lastRun = run;
 
     const warnings = [];
-    if (run.meta.aborted) warnings.push('execução abortada');
-    if (pageHidden) warnings.push('a página saiu da tela durante a medição');
+    if (aborted) warnings.push('execução interrompida antes do fim');
+    if (pageHidden && cfg.mode !== 'ar') warnings.push('a página saiu da tela durante a medição');
     if (batteryStart.charging === 1 || batteryEnd.charging === 1) warnings.push('o aparelho estava carregando');
-    if (tracker && cam.width && cam.height) {
-      const req = CONDITIONS[cfg.condition];
-      const match = (cam.width === req.width && cam.height === req.height) ||
-        (cam.width === req.height && cam.height === req.width);
-      if (!match) warnings.push(`a câmera entregou ${cam.width}×${cam.height} em vez de ${req.width}×${req.height}`);
+    if (cfg.mode === 'ar' && run.summary.tracking_full_ratio < 0.9) {
+      warnings.push(`rastreamento completo em só ${(run.summary.tracking_full_ratio * 100).toFixed(0)}% dos quadros`);
     }
-    if (tracker && run.summary.pose_detected_ratio < 0.9) {
-      warnings.push(`pose encontrada em só ${(run.summary.pose_detected_ratio * 100).toFixed(0)}% dos quadros da câmera`);
-    }
-    setStatus(warnings.length ? `Salva, com avisos: ${warnings.join('; ')}.` : 'Execução salva.', warnings.length > 0);
+    setStatus((warnings.length ? `Salva, com avisos: ${warnings.join('; ')}.` : 'Execução salva.') +
+      '\nRecarregue a página antes da próxima execução.', warnings.length > 0);
     ui.rep.value = String(cfg.rep + 1);
     savePrefs();
   } catch (err) {
     console.error(err);
-    setStatus(`Falhou: ${err && err.message ? err.message : err}`, true);
+    const unsupported = err && (err.name === 'NotSupportedError' || /not supported|feature/i.test(err.message || ''));
+    setStatus(`Falhou: ${err && err.message ? err.message : err}` +
+      (unsupported ? '\nUm dos recursos pedidos pode não existir neste aparelho: use "Testar recursos do AR".' : ''), true);
+    if (session) await session.end().catch(() => {});
   } finally {
     document.removeEventListener('visibilitychange', onVisibility);
     if (world) world.dispose();
-    if (tracker) tracker.stop();
     try { await wakeLock?.release(); } catch { /* ignora */ }
     document.body.classList.remove('running');
     ui.hud.hidden = true;
-    if (document.fullscreenElement) {
-      try { screen.orientation.unlock(); } catch { /* ignora */ }
-      await document.exitFullscreen().catch(() => {});
-    }
+    if (document.fullscreenElement) await document.exitFullscreen().catch(() => {});
     ui.start.disabled = false;
+    ui.probe.disabled = false;
     await refreshTables();
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Teste de recursos: abre uma sessão AR pedindo tudo como opcional, mede o
+// ritmo dos quadros por alguns segundos e mostra o que o aparelho concedeu.
+
+const PROBE_SECONDS = 8;
+
+async function runProbe() {
+  ui.start.disabled = true;
+  ui.probe.disabled = true;
+  ui.hud.hidden = false;
+  let session = null;
+  let world = null;
+  const rows = [];
+  try {
+    if (!navigator.xr) throw new Error('este navegador não tem WebXR');
+    const arOk = await navigator.xr.isSessionSupported('immersive-ar');
+    rows.push(['immersive-ar suportado', arOk ? 'sim' : 'não']);
+    if (!arOk) throw new Error('o Chrome deste aparelho não oferece sessão AR');
+
+    session = await navigator.xr.requestSession('immersive-ar', sessionInit(Object.keys(FEATURES), false));
+    world = buildScene({ objects: 0, locked: true }, true);
+    const sz = world.renderer.getDrawingBufferSize(new THREE.Vector2()); // antes do AR assumir o canvas
+    await world.renderer.xr.setSession(session);
+    const info = describeSession(session);
+    rows.push(['Recursos concedidos', info.enabled || '—']);
+    if (info.depthUsage) rows.push(['Depth', `${info.depthUsage} · ${info.depthFormat}`]);
+    rows.push(['frameRate informado', info.frameRate === '' ? 'não exposto' : String(info.frameRate)]);
+    rows.push(['Resolução de desenho do AR', info.fbW ? `${info.fbW}×${info.fbH}` : '—']);
+    rows.push(['Resolução de desenho sem AR', `${sz.x}×${sz.y}`]);
+
+    const intervals = [];
+    const states = [0, 0, 0];
+    await new Promise((resolve) => {
+      let start = null;
+      let prev = null;
+      session.addEventListener('end', resolve);
+      world.renderer.setAnimationLoop((ts, xrFrame) => {
+        if (start === null) start = ts;
+        if (prev !== null) intervals.push(ts - prev);
+        prev = ts;
+        const pose = xrFrame.getViewerPose(world.renderer.xr.getReferenceSpace());
+        states[!pose ? 0 : pose.emulatedPosition ? 1 : 2]++;
+        world.render((ts - start) / 1000);
+        ui.hudText.textContent = `Testando recursos… ${((ts - start) / 1000).toFixed(0)}/${PROBE_SECONDS}s (mova o celular devagar)`;
+        if (ts - start >= PROBE_SECONDS * 1000 || abortRequested) resolve();
+      });
+    });
+    world.renderer.setAnimationLoop(null);
+    await session.end().catch(() => {});
+
+    const s = stats(intervals);
+    const total = states[0] + states[1] + states[2] || 1;
+    rows.push(['Quadros medidos', String(s.n)]);
+    rows.push(['Intervalo mediano', `${n2(s.p50)} ms (≈ ${n2(1000 / s.p50)} fps)`]);
+    rows.push(['Rastreamento ok / só rotação / perdido',
+      `${n2((states[2] / total) * 100)}% / ${n2((states[1] / total) * 100)}% / ${n2((states[0] / total) * 100)}%`]);
+    setStatus('Teste concluído. Recarregue a página antes de medir.');
+  } catch (err) {
+    console.error(err);
+    rows.push(['Erro', err && err.message ? err.message : String(err)]);
+    setStatus(`Teste falhou: ${err && err.message ? err.message : err}`, true);
+    if (session) await session.end().catch(() => {});
+  } finally {
+    if (world) world.dispose();
+    ui.hud.hidden = true;
+    ui.probeTable.innerHTML = rows.map(([k, v]) => `<tr><th>${k}</th><td>${escapeHtml(v)}</td></tr>`).join('');
+    ui.probeBox.hidden = false;
+    ui.start.disabled = false;
+    ui.probe.disabled = false;
   }
 }
 
@@ -555,7 +646,7 @@ async function runOnce() {
 // CSV
 
 const FRAME_COLS = ['run_id', 'owner', 'condition', 'rep', 'frame', 't_ms', 'epoch_ms',
-  'frame_ms', 'work_ms', 'tracker_ran', 'inference_ms', 'poses', 'warmup'];
+  'frame_ms', 'work_ms', 'feature_ms', 'tracking', 'hits', 'warmup'];
 
 function fmt(v, digits = 3) {
   if (v === '' || v === null || v === undefined) return '';
@@ -564,8 +655,8 @@ function fmt(v, digits = 3) {
   return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
 }
 
-function framesCsv(runs, withHeader = true) {
-  const lines = withHeader ? [FRAME_COLS.join(',')] : [];
+function framesCsv(runs) {
+  const lines = [FRAME_COLS.join(',')];
   for (const run of runs) {
     const m = run.meta;
     const f = run.frames;
@@ -574,7 +665,7 @@ function framesCsv(runs, withHeader = true) {
     for (let i = 0; i < f.n; i++) {
       lines.push([
         prefix, i, fmt(f.t_ms[i]), fmt(f.epoch_ms[i], 1), fmt(f.frame_ms[i]), fmt(f.work_ms[i]),
-        f.tracker_ran[i], fmt(f.inference_ms[i]), f.poses[i], f.t_ms[i] < warmMs ? 1 : 0,
+        fmt(f.feature_ms[i]), f.tracking[i], f.hits[i], f.t_ms[i] < warmMs ? 1 : 0,
       ].join(','));
     }
   }
@@ -625,6 +716,11 @@ function setStatus(msg, isError = false) {
 
 const n2 = (v) => (Number.isFinite(v) ? v.toFixed(2) : '—');
 
+function updateCondition() {
+  ui.arFeatures.disabled = ui.mode.value !== 'ar';
+  ui.condLabel.textContent = conditionLabel(ui.mode.value, ui.mode.value === 'ar' ? selectedFeatures() : []);
+}
+
 function showLast(run) {
   if (!run) { ui.last.hidden = true; return; }
   const s = run.summary;
@@ -637,10 +733,9 @@ function showLast(run) {
     ['Pior quadro', `${n2(s.frame_max_ms)} ms`],
     ['FPS médio', n2(s.fps_mean)],
   ];
-  if (m.model) {
-    rows.push(['Câmera entregue', `${m.cam_w}×${m.cam_h} @ ${n2(m.cam_fps)} fps`]);
-    rows.push(['Rastreador', `${n2(s.tracker_hz)} Hz · ${n2(s.inference_mean_ms)} ms médio · p95 ${n2(s.inference_p95_ms)} ms`]);
-    rows.push(['Pose encontrada', `${n2(s.pose_detected_ratio * 100)}%`]);
+  if (m.mode === 'ar') {
+    rows.push(['Rastreamento completo', `${n2(s.tracking_full_ratio * 100)}%`]);
+    if (m.features_requested) rows.push(['Recursos extras', `${n2(s.feature_mean_ms)} ms médio · p95 ${n2(s.feature_p95_ms)} ms`]);
   }
   ui.lastTable.innerHTML = rows.map(([k, v]) => `<tr><th>${k}</th><td class="num">${v}</td></tr>`).join('');
   ui.last.hidden = false;
@@ -654,8 +749,8 @@ async function refreshTables() {
     const head = '<tr><th>Hora</th><th>Quem</th><th>Cond.</th><th class="num">Rep</th><th class="num">p95 ms</th><th class="num">Média ms</th></tr>';
     const body = runs.map((r) => {
       const time = new Date(r.meta.start_epoch_ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-      const flag = r.meta.aborted ? ' (abortada)' : '';
-      return `<tr><td>${time}</td><td>${escapeHtml(r.meta.owner)}</td><td>${r.meta.condition}${flag}</td>` +
+      const flag = r.meta.aborted ? ' (interrompida)' : '';
+      return `<tr><td>${time}</td><td>${escapeHtml(r.meta.owner)}</td><td>${escapeHtml(r.meta.condition)}${flag}</td>` +
         `<td class="num">${r.meta.rep}</td><td class="num">${n2(r.summary.frame_p95_ms)}</td><td class="num">${n2(r.summary.frame_mean_ms)}</td></tr>`;
     }).join('');
     ui.runsTable.innerHTML = head + body;
@@ -670,6 +765,7 @@ function escapeHtml(s) {
 }
 
 ui.start.addEventListener('click', runOnce);
+ui.probe.addEventListener('click', () => { abortRequested = false; runProbe(); });
 ui.abort.addEventListener('click', () => { abortRequested = true; });
 ui.dlLast.addEventListener('click', () => { if (lastRun) downloadRuns([lastRun], lastRun.id); });
 ui.dlAll.addEventListener('click', async () => {
@@ -691,11 +787,14 @@ ui.clear.addEventListener('click', async () => {
   await refreshTables();
   setStatus('Execuções apagadas.');
 });
-for (const k of PREF_FIELDS) ui[k].addEventListener('change', savePrefs);
+for (const k of PREF_FIELDS) ui[k].addEventListener('change', () => { savePrefs(); updateCondition(); });
 
 loadPrefs();
+updateCondition();
 await store.open();
 await refreshTables();
 if (!window.isSecureContext) {
-  setStatus('Abra esta página por HTTPS (GitHub Pages) para a câmera funcionar.', true);
+  setStatus('Abra esta página por HTTPS (GitHub Pages) para o AR funcionar.', true);
+} else if (!navigator.xr) {
+  setStatus('Este navegador não tem WebXR: o modo AR não vai funcionar.', true);
 }
