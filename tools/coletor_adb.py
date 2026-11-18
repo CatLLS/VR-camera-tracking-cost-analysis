@@ -17,7 +17,7 @@ Uso:
   python tools/coletor_adb.py --rotulo 1080p_r1 --duracao 130
   python tools/coletor_adb.py --rotulo 15min_off --duracao 930 --intervalo 2
 
-Só usa a biblioteca padrão. Precisa do adb no PATH (Android platform-tools).
+Só usa a biblioteca padrão. Usa o adb de tools/platform-tools (ou, se não existir, o do PATH).
 """
 
 import argparse
@@ -45,8 +45,15 @@ SAMPLE_CMD = (
 )
 
 
+def adb_exe():
+    """adb da pasta tools/platform-tools, se existir; senão, o do PATH."""
+    local = os.path.join(os.path.dirname(os.path.abspath(__file__)), "platform-tools",
+                         "adb.exe" if os.name == "nt" else "adb")
+    return local if os.path.exists(local) else "adb"
+
+
 def adb(args, serial=None, timeout=15):
-    cmd = ["adb"] + (["-s", serial] if serial else []) + args
+    cmd = [adb_exe()] + (["-s", serial] if serial else []) + args
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
 
@@ -142,7 +149,7 @@ def main():
     try:
         devs = adb(["devices"]).stdout
     except FileNotFoundError:
-        sys.exit("adb não encontrado. Instale o Android platform-tools e coloque-o no PATH.")
+        sys.exit("adb não encontrado. Extraia o Android platform-tools em tools/platform-tools (ver TestGuide).")
     if "\tdevice" not in devs:
         sys.exit("Nenhum aparelho autorizado no adb. Saída de 'adb devices':\n" + devs)
 

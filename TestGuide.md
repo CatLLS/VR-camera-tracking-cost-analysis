@@ -36,14 +36,18 @@ Times are guesses: most of each run is waiting for the phone to cool down, and h
 2. Under *Build and deployment*, set **Branch** to `arcore` and folder to `/docs`. Click **Save**.
 3. Wait about 2 minutes. The page address stays the same: `https://catlls.github.io/VR-camera-tracking-cost-analysis/`.
 
-### 0.2 Install adb on the PC (10 min)
+### 0.2 Open PowerShell with the project's adb (5 min)
 
-1. Download **SDK Platform-Tools for Windows** from https://developer.android.com/tools/releases/platform-tools and unzip it to `C:\platform-tools`.
-2. Add it to the PATH: Start menu → type *variáveis de ambiente* → **Editar as variáveis de ambiente do sistema** → **Variáveis de Ambiente…** → under your user, select **Path** → **Editar** → **Novo** → `C:\platform-tools` → OK, OK, OK.
-3. Open a **new** PowerShell window in the repository folder (in File Explorer, open the folder, click the address bar, type `powershell`, Enter).
-4. Type `adb version`. It should print a version number. If it says the command isn't recognized, the PATH step didn't take: close and reopen PowerShell, or redo step 2.
+adb is already inside the project, in `tools\platform-tools\` (Google's official Platform-Tools 37.0.1, signature checked). Nothing gets installed on the PC, and the folder isn't uploaded to GitHub.
 
-**Keep this PowerShell window open for all measuring days.** Every command in this guide is typed there.
+1. Open a PowerShell window in the repository folder: in File Explorer, open `C:\Games(shared)\TrabalhoSO-N2-2026`, click the address bar, type `powershell`, Enter.
+2. Type this line. It lets this window (and only this window) use `adb` by name:
+   ```
+   $env:Path = "$PWD\tools\platform-tools;$env:Path"
+   ```
+3. Type `adb version`. It should print `Android Debug Bridge version 1.0.41` and a path ending in `tools\platform-tools\adb.exe`.
+
+**Keep this PowerShell window open for all measuring days.** Every command in this guide is typed there. If you close it, open a new one and repeat step 2. The Python tools find the project's adb by themselves; the line is only for the `adb …` commands you type directly.
 
 ### 0.3 Update the phone's apps, then freeze them (15 min)
 
@@ -133,7 +137,7 @@ Do this at the start of Day 1, Day 2 and Day 3.
 1. Charge the phone to about 90%, then **unplug it**.
 2. On the phone: turn on **Modo avião**, then turn **Wi-Fi** back on (same network as the PC). Check *Não perturbe* is on. Close all other apps (recent apps button → *Fechar todos*). Chrome must have only the measurement page open.
 3. Check the settings from 0.4 are unchanged (brightness, FHD+, power mode).
-4. Reconnect adb: `adb connect <IP>:5555` then `adb devices` (must say `device`). If it fails, see the troubleshooting table at the end.
+4. Reconnect adb: in PowerShell (if it's a new window, first run the `$env:Path = …` line from step 0.2), `adb connect <IP>:5555` then `adb devices` (must say `device`). If it fails, see the troubleshooting table at the end.
 5. Turn the phone's screen off and leave it still on the table for **15 minutes**.
 6. Then: `python tools/esfriar.py --repouso`. It records today's resting temperature (e.g. `Repouso de hoje: 29.8 °C`) and prints the target for starting each run (resting + 1 °C).
 7. Set up the room: lights on as usual, metronome open.
@@ -274,6 +278,8 @@ After run 44: set **Duração (s)** back to 120, then do **End of every measurin
 | `Salva, com avisos: o aparelho estava carregando` | The cable/charger was connected. Unplug it, wait for `esfriar.py`, repeat at the end of the round. |
 | `Salva, com avisos: execução interrompida antes do fim` | The AR session was closed (back button, a call, the screen locked). Repeat at the end of the round. |
 | `Salva, com avisos: as threads extras não mandaram nenhum relatório` | Stop and send me a screenshot. |
+| `adb` *não é reconhecido como nome de cmdlet…* | This PowerShell window doesn't know the project's adb yet: run the `$env:Path = …` line from step 0.2. |
+| With the cable plugged in, `adb devices` shows nothing (or *unauthorized*) | Unlock the phone and look for the *Permitir depuração USB?* box. Try another USB port/cable, and set the USB mode in the phone's notification to *Transferir arquivos*. If it still shows nothing, Windows is missing the Samsung USB driver. That **is** a system-wide install (it needs admin rights), so ask me before doing it. |
 | AR doesn't start / error mentioning *not supported* | Open Play Store and check *Google Play Services for AR* is installed. Run **Testar recursos do AR** again. |
 | The collector says `Nenhum aparelho autorizado no adb` | `adb connect <IP>:5555`. If that fails, the phone probably rebooted or changed IP: cable in, `adb tcpip 5555`, check the IP again, `adb connect`, cable out. Redo the run (the page data alone isn't enough; fronts 2 and 4 need the collector). |
 | You forgot to start the collector, or started it with the wrong label | Repeat the run at the end of the round. If only the label was wrong, tell me which folder it is; don't rename it. |
@@ -281,6 +287,15 @@ After run 44: set **Duração (s)** back to 120, then do **End of every measurin
 | The page shows an older version number | Wait a few minutes, then reload. Check the GitHub Pages branch is `arcore` (step 0.1). |
 | Chrome or ARCore updated by itself | Write down the date and the new version and tell me. Don't uninstall anything. |
 | Anything else | Write down what happened, take a screenshot, and ask me before continuing. |
+
+# Cleaning up after the project
+
+Only after the data is safely in `dados\` and the report is done.
+
+1. In PowerShell: `adb kill-server` (adb leaves a background process running; while it runs, Windows won't let you delete its folder).
+2. Delete `tools\platform-tools\`.
+3. Delete `C:\Users\<this Windows user>\.android\` — the folder adb creates in the user profile with its authorization key.
+4. On the phone: Opções do desenvolvedor → **Revogar autorizações de depuração USB**, turn off **Depuração USB**, then turn off *Opções do desenvolvedor* at the top of that screen. Turn Play Store auto-updates back on if you want them.
 
 # Rules that never change
 

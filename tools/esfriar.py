@@ -15,7 +15,7 @@ Lê a temperatura da bateria (dumpsys battery) via adb.
   python tools/esfriar.py --alvo 31.5
       Usa um alvo explícito em vez do repouso gravado.
 
-Só usa a biblioteca padrão. Precisa do adb no PATH.
+Só usa a biblioteca padrão. Usa o adb de tools/platform-tools (ou, se não existir, o do PATH).
 """
 
 import argparse
@@ -30,8 +30,15 @@ TOLERANCIA_C = 1.0
 BATERIA_MIN = 50
 
 
+def adb_exe():
+    """adb da pasta tools/platform-tools, se existir; senão, o do PATH."""
+    local = os.path.join(os.path.dirname(os.path.abspath(__file__)), "platform-tools",
+                         "adb.exe" if os.name == "nt" else "adb")
+    return local if os.path.exists(local) else "adb"
+
+
 def bateria(serial=None):
-    cmd = ["adb"] + (["-s", serial] if serial else []) + ["shell", "dumpsys", "battery"]
+    cmd = [adb_exe()] + (["-s", serial] if serial else []) + ["shell", "dumpsys", "battery"]
     out = subprocess.run(cmd, capture_output=True, text=True, timeout=15).stdout
     temp = re.search(r"temperature:\s*(-?\d+)", out)
     nivel = re.search(r"level:\s*(\d+)", out)
@@ -54,9 +61,9 @@ def main():
     args = ap.parse_args()
 
     try:
-        subprocess.run(["adb", "version"], capture_output=True, timeout=15)
+        subprocess.run([adb_exe(), "version"], capture_output=True, timeout=15)
     except FileNotFoundError:
-        sys.exit("adb não encontrado. Instale o Android platform-tools e coloque-o no PATH.")
+        sys.exit("adb não encontrado. Extraia o Android platform-tools em tools/platform-tools (ver TestGuide).")
 
     if args.repouso:
         temp, nivel, carregando = bateria(args.serial)
