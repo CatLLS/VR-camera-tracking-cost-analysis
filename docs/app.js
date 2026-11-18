@@ -1,16 +1,22 @@
 // Custo do rastreamento AR — mede o tempo de quadro de uma cena 3D com e sem o
-// rastreamento de posição do ARCore (sessão WebXR "immersive-ar" do Chrome).
+// rastreamento de posição do ARCore (sessão WebXR "immersive-ar" do Chrome),
+// enquanto 0, 2, 4 ou 6 threads extras do "jogo" (Web Workers) disputam a CPU.
 //
 // Cada execução grava, por quadro: intervalo desde o quadro anterior (frame_ms),
-// tempo gasto no callback (work_ms), tempo gasto lendo os recursos extras do ARCore
-// (feature_ms) e o estado do rastreamento. Nada é estimado: todo número sai do
-// próprio aparelho.
+// tempo gasto no callback (work_ms) e o estado do rastreamento; e, por segundo,
+// quanto trabalho cada thread extra conseguiu completar. Nada é estimado: todo
+// número sai do próprio aparelho.
 
 import * as THREE from 'three';
 
-const APP_VERSION = '2.0.0-ar';
+const APP_VERSION = '2.1.0-ar-threads';
 
-// Recursos extras do ARCore que a página sabe pedir e exercitar a cada quadro.
+// Cada thread extra trabalha THREAD_BUSY_MS a cada THREAD_PERIOD_MS (50%).
+const THREAD_BUSY_MS = 5;
+const THREAD_PERIOD_MS = 10;
+
+// Recursos extras do ARCore. As execuções não os usam (a variável é o número de
+// threads); o "Testar recursos do AR" pede todos para mostrar o que o aparelho tem.
 const FEATURES = {
   hit: { xr: 'hit-test', label: 'hit-test' },
   light: { xr: 'light-estimation', label: 'luz' },
@@ -25,9 +31,8 @@ const MAX_FPS_BUFFER = 250; // quadros por segundo reservados (cobre telas de 24
 
 const $ = (id) => document.getElementById(id);
 const ui = {
-  owner: $('owner'), mode: $('mode'), featHit: $('feat-hit'), featLight: $('feat-light'),
-  featDepth: $('feat-depth'), arFeatures: $('ar-features'), condLabel: $('cond-label'),
-  rep: $('rep'), duration: $('duration'), warmup: $('warmup'), objects: $('objects'),
+  owner: $('owner'), mode: $('mode'), threads: $('threads'), capFps: $('capFps'),
+  condLabel: $('cond-label'), rep: $('rep'), duration: $('duration'), warmup: $('warmup'), objects: $('objects'),
   locked: $('locked'), start: $('btn-start'), probe: $('btn-probe'), abort: $('btn-abort'),
   status: $('status'), hud: $('hud'), hudText: $('hud-text'),
   probeBox: $('probe'), probeTable: $('probe-table'),
@@ -38,7 +43,7 @@ const ui = {
 // ---------------------------------------------------------------------------
 // Preferências locais (só conveniência: lembra os campos entre aberturas)
 
-const PREF_FIELDS = ['owner', 'mode', 'featHit', 'featLight', 'featDepth', 'rep',
+const PREF_FIELDS = ['owner', 'mode', 'threads', 'capFps', 'rep',
   'duration', 'warmup', 'objects', 'locked'];
 
 function loadPrefs() {
@@ -313,6 +318,35 @@ function summarize(run) {
     feature_mean_ms: fe.mean,
     feature_p95_ms: fe.p95,
     tracking_full_ratio: isAr && counted ? full / counted : NaN,
+    ...summarizeThreads(run),
+  };
+}
+
+// Trabalho das threads extras depois do aquecimento: quanto cada uma completou
+// por segundo e que fração do tempo ela de fato passou trabalhando. Se o
+// escalonador as deixa esperando, as duas coisas caem.
+function summarizeThreads(run) {
+  const warmMs = run.meta.warmup_s * 1000;
+  const samples = (run.threadSamples || []).filter((s) => s.t_ms >= warmMs && s.wallMs > 0);
+  if (!samples.length) {
+    return { threads_units_per_s: NaN, threads_min_units_per_s: NaN, threads_busy_ratio: NaN };
+  }
+  const perWorker = new Map();
+  let busy = 0;
+  let wall = 0;
+  for (const s of samples) {
+    const w = perWorker.get(s.worker) || { units: 0, wall: 0 };
+    w.units += s.units;
+    w.wall += s.wallMs;
+    perWorker.set(s.worker, w);
+    busy += s.busyMs;
+    wall += s.wallMs;
+  }
+  const rates = [...perWorker.values()].map((w) => (w.units * 1000) / w.wall);
+  return {
+    threads_units_per_s: rates.reduce((a, b) => a + b, 0) / rates.length,
+    threads_min_units_per_s: Math.min(...rates),
+    threads_busy_ratio: busy / wall,
   };
 }
 
@@ -321,27 +355,20 @@ function summarize(run) {
 
 let abortRequested = false;
 
-function selectedFeatures() {
-  const keys = [];
-  if (ui.featHit.checked) keys.push('hit');
-  if (ui.featLight.checked) keys.push('light');
-  if (ui.featDepth.checked) keys.push('depth');
-  return keys;
-}
-
-function conditionLabel(mode, featureKeys) {
-  if (mode !== 'ar') return 'sem-ar';
-  return ['ar', ...featureKeys.map((k) => FEATURES[k].label)].join('+');
+function conditionLabel(mode, threads) {
+  return `${mode === 'ar' ? 'ar' : 'sem-ar'}_t${threads}`;
 }
 
 function readConfig() {
   const mode = ui.mode.value;
-  const features = mode === 'ar' ? selectedFeatures() : [];
+  const threads = parseInt(ui.threads.value, 10) || 0;
   return {
     owner: ui.owner.value.trim(),
     mode,
-    features,
-    condition: conditionLabel(mode, features),
+    features: [],
+    threads,
+    capFps: parseFloat(ui.capFps.value) || 0,
+    condition: conditionLabel(mode, threads),
     rep: parseInt(ui.rep.value, 10) || 1,
     duration: Math.max(5, parseFloat(ui.duration.value) || 120),
     warmup: Math.max(0, parseFloat(ui.warmup.value) || 0),
@@ -362,6 +389,37 @@ async function batteryInfo() {
 
 const nextFrame = () => new Promise((r) => requestAnimationFrame(r));
 
+// Cria as threads extras já prontas; elas só começam a trabalhar em start(),
+// no primeiro quadro medido. Cada uma manda um resumo a cada ~1 s.
+function createThreads(n) {
+  const samples = [];
+  const workers = [];
+  let t0 = 0;
+  for (let i = 0; i < n; i++) {
+    const w = new Worker('worker.js');
+    w.onmessage = (e) => {
+      const now = performance.now();
+      samples.push({
+        worker: i,
+        t_ms: now - t0,
+        epoch_ms: performance.timeOrigin + now,
+        units: e.data.units,
+        busyMs: e.data.busyMs,
+        wallMs: e.data.wallMs,
+      });
+    };
+    workers.push(w);
+  }
+  return {
+    samples,
+    start(startPerf) {
+      t0 = startPerf;
+      for (const w of workers) w.postMessage({ cmd: 'start', busyMs: THREAD_BUSY_MS, periodMs: THREAD_PERIOD_MS });
+    },
+    stop() { for (const w of workers) w.terminate(); },
+  };
+}
+
 function newFrameBuffers(cap) {
   return {
     n: 0,
@@ -381,6 +439,10 @@ async function runOnce() {
     setStatus('Preencha o nome do integrante antes de medir.', true);
     return;
   }
+  if (cfg.mode !== 'ar' && !(cfg.capFps > 0)) {
+    setStatus('Sem o limite de quadros, "sem AR" não é comparável com "AR". Toque em "Testar recursos do AR" uma vez antes (ele preenche o limite).', true);
+    return;
+  }
   savePrefs();
   abortRequested = false;
   ui.start.disabled = true;
@@ -388,6 +450,7 @@ async function runOnce() {
 
   let session = null;
   let world = null;
+  let threads = null;
   let wakeLock = null;
   let pageHidden = 0;
   let sessionInfo = { enabled: '', depthUsage: '', depthFormat: '', frameRate: '', fbW: '', fbH: '' };
@@ -421,6 +484,11 @@ async function runOnce() {
     const f = newFrameBuffers(cap);
     const durationMs = cfg.duration * 1000;
     let endedByUser = false;
+    threads = createThreads(cfg.threads);
+
+    // Sem AR, o laço de quadros pula as chamadas que chegariam antes do ritmo
+    // do AR (com folga de 4 ms para a variação natural da tela).
+    const capIntervalMs = cfg.mode !== 'ar' ? 1000 / cfg.capFps : 0;
 
     await new Promise((resolve) => {
       let startTs = null;
@@ -433,8 +501,15 @@ async function runOnce() {
 
       function frame(ts, xrFrame) {
         if (done) return;
+        if (capIntervalMs && prevTs !== null && ts - prevTs < capIntervalMs - 4) {
+          requestAnimationFrame(frame);
+          return;
+        }
         const w0 = performance.now();
-        if (startTs === null) startTs = ts;
+        if (startTs === null) {
+          startTs = ts;
+          threads.start(w0);
+        }
         const t = ts - startTs;
 
         let tracking = 0;
@@ -484,6 +559,7 @@ async function runOnce() {
     });
 
     world.renderer.setAnimationLoop(null);
+    threads.stop();
     if (session && !endedByUser) await session.end().catch(() => {});
 
     const batteryEnd = await batteryInfo();
@@ -505,6 +581,11 @@ async function runOnce() {
         depth_usage: sessionInfo.depthUsage,
         depth_format: sessionInfo.depthFormat,
         xr_frame_rate: sessionInfo.frameRate,
+        threads: cfg.threads,
+        thread_busy_ms: THREAD_BUSY_MS,
+        thread_period_ms: THREAD_PERIOD_MS,
+        cap_fps: cfg.mode !== 'ar' ? cfg.capFps : '',
+        hardware_concurrency: navigator.hardwareConcurrency || '',
         rep: cfg.rep,
         duration_s: cfg.duration,
         warmup_s: cfg.warmup,
@@ -535,6 +616,7 @@ async function runOnce() {
         tracking: f.tracking.slice(0, f.n),
         hits: f.hits.slice(0, f.n),
       },
+      threadSamples: threads.samples.slice(),
     };
     run.summary = summarize(run);
     await store.put(run);
@@ -547,10 +629,11 @@ async function runOnce() {
     if (cfg.mode === 'ar' && run.summary.tracking_full_ratio < 0.9) {
       warnings.push(`rastreamento completo em só ${(run.summary.tracking_full_ratio * 100).toFixed(0)}% dos quadros`);
     }
+    if (cfg.threads > 0 && !Number.isFinite(run.summary.threads_units_per_s)) {
+      warnings.push('as threads extras não mandaram nenhum relatório');
+    }
     setStatus((warnings.length ? `Salva, com avisos: ${warnings.join('; ')}.` : 'Execução salva.') +
       '\nRecarregue a página antes da próxima execução.', warnings.length > 0);
-    ui.rep.value = String(cfg.rep + 1);
-    savePrefs();
   } catch (err) {
     console.error(err);
     const unsupported = err && (err.name === 'NotSupportedError' || /not supported|feature/i.test(err.message || ''));
@@ -559,6 +642,7 @@ async function runOnce() {
     if (session) await session.end().catch(() => {});
   } finally {
     document.removeEventListener('visibilitychange', onVisibility);
+    if (threads) threads.stop();
     if (world) world.dispose();
     try { await wakeLock?.release(); } catch { /* ignora */ }
     document.body.classList.remove('running');
@@ -626,6 +710,13 @@ async function runProbe() {
     rows.push(['Intervalo mediano', `${n2(s.p50)} ms (≈ ${n2(1000 / s.p50)} fps)`]);
     rows.push(['Rastreamento ok / só rotação / perdido',
       `${n2((states[2] / total) * 100)}% / ${n2((states[1] / total) * 100)}% / ${n2((states[0] / total) * 100)}%`]);
+    // O ritmo do AR vira o limite de quadros das execuções sem AR.
+    const arFps = Math.round(1000 / s.p50);
+    if (Number.isFinite(arFps) && arFps > 0) {
+      ui.capFps.value = String(arFps);
+      savePrefs();
+      rows.push(['Limite sem AR gravado', `${arFps} fps`]);
+    }
     setStatus('Teste concluído. Recarregue a página antes de medir.');
   } catch (err) {
     console.error(err);
@@ -672,10 +763,33 @@ function framesCsv(runs) {
   return lines.join('\n') + '\n';
 }
 
+const THREAD_COLS = ['run_id', 'condition', 'rep', 'worker', 't_ms', 'epoch_ms', 'units', 'busy_ms', 'wall_ms', 'warmup'];
+
+function threadsCsv(runs) {
+  const lines = [THREAD_COLS.join(',')];
+  for (const run of runs) {
+    const m = run.meta;
+    const warmMs = m.warmup_s * 1000;
+    for (const s of run.threadSamples || []) {
+      lines.push([fmt(m.run_id), fmt(m.condition), fmt(m.rep), s.worker, fmt(s.t_ms), fmt(s.epoch_ms, 1),
+        s.units, fmt(s.busyMs), fmt(s.wallMs), s.t_ms < warmMs ? 1 : 0].join(','));
+    }
+  }
+  return lines.join('\n') + '\n';
+}
+
+// Colunas = união das colunas de todas as execuções (execuções de versões
+// anteriores da página podem não ter todas).
+function unionKeys(objs) {
+  const keys = [];
+  for (const o of objs) for (const k of Object.keys(o)) if (!keys.includes(k)) keys.push(k);
+  return keys;
+}
+
 function summaryCsv(runs) {
   if (!runs.length) return '';
-  const metaCols = Object.keys(runs[0].meta);
-  const sumCols = Object.keys(runs[0].summary);
+  const metaCols = unionKeys(runs.map((r) => r.meta));
+  const sumCols = unionKeys(runs.map((r) => r.summary));
   const lines = [[...metaCols, ...sumCols].join(',')];
   for (const run of runs) {
     lines.push([...metaCols.map((k) => fmt(run.meta[k])), ...sumCols.map((k) => fmt(run.summary[k]))].join(','));
@@ -701,6 +815,10 @@ async function downloadRuns(runs, tag) {
   download(`resumo_${tag}.csv`, summaryCsv(runs));
   await sleep(600); // alguns navegadores bloqueiam dois downloads no mesmo instante
   download(`quadros_${tag}.csv`, framesCsv(runs));
+  if (runs.some((r) => r.threadSamples && r.threadSamples.length)) {
+    await sleep(600);
+    download(`threads_${tag}.csv`, threadsCsv(runs));
+  }
 }
 
 // ---------------------------------------------------------------------------
@@ -717,8 +835,7 @@ function setStatus(msg, isError = false) {
 const n2 = (v) => (Number.isFinite(v) ? v.toFixed(2) : '—');
 
 function updateCondition() {
-  ui.arFeatures.disabled = ui.mode.value !== 'ar';
-  ui.condLabel.textContent = conditionLabel(ui.mode.value, ui.mode.value === 'ar' ? selectedFeatures() : []);
+  ui.condLabel.textContent = conditionLabel(ui.mode.value, parseInt(ui.threads.value, 10) || 0);
 }
 
 function showLast(run) {
@@ -735,7 +852,12 @@ function showLast(run) {
   ];
   if (m.mode === 'ar') {
     rows.push(['Rastreamento completo', `${n2(s.tracking_full_ratio * 100)}%`]);
-    if (m.features_requested) rows.push(['Recursos extras', `${n2(s.feature_mean_ms)} ms médio · p95 ${n2(s.feature_p95_ms)} ms`]);
+  } else if (m.cap_fps) {
+    rows.push(['Limite de quadros', `${m.cap_fps} fps`]);
+  }
+  if (m.threads > 0) {
+    rows.push(['Threads extras', `${m.threads} · ocupadas ${n2(s.threads_busy_ratio * 100)}% do tempo`]);
+    rows.push(['Trabalho por thread', `${n2(s.threads_units_per_s)} unid./s (a mais lenta: ${n2(s.threads_min_units_per_s)})`]);
   }
   ui.lastTable.innerHTML = rows.map(([k, v]) => `<tr><th>${k}</th><td class="num">${v}</td></tr>`).join('');
   ui.last.hidden = false;
@@ -748,7 +870,7 @@ async function refreshTables() {
   } else {
     const head = '<tr><th>Hora</th><th>Quem</th><th>Cond.</th><th class="num">Rep</th><th class="num">p95 ms</th><th class="num">Média ms</th></tr>';
     const body = runs.map((r) => {
-      const time = new Date(r.meta.start_epoch_ms).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      const time = new Date(r.meta.start_epoch_ms).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
       const flag = r.meta.aborted ? ' (interrompida)' : '';
       return `<tr><td>${time}</td><td>${escapeHtml(r.meta.owner)}</td><td>${escapeHtml(r.meta.condition)}${flag}</td>` +
         `<td class="num">${r.meta.rep}</td><td class="num">${n2(r.summary.frame_p95_ms)}</td><td class="num">${n2(r.summary.frame_mean_ms)}</td></tr>`;
@@ -789,6 +911,7 @@ ui.clear.addEventListener('click', async () => {
 });
 for (const k of PREF_FIELDS) ui[k].addEventListener('change', () => { savePrefs(); updateCondition(); });
 
+$('version').textContent = `(versão ${APP_VERSION})`;
 loadPrefs();
 updateCondition();
 await store.open();
