@@ -97,7 +97,7 @@ The cable charges the phone, which would ruin the battery numbers, so measuremen
 ### 0.8 Feature test on the page (5 min)
 
 1. On the phone, open Chrome with **only one tab** (close the others: tab counter → ⋮ → *Fechar todas as guias*). Open the page address.
-2. Check the top of the page says **(versão 2.1.0-ar-threads)**. If it shows an older version or a different page, wait 2 minutes and pull down to reload.
+2. Check the top of the page says **(versão 2.1.1-ar-threads)**. If it shows an older version or a different page, wait 2 minutes and pull down to reload.
 3. Fill **Integrante** with your name. Write it exactly the same way every time.
 4. Tap **Testar recursos do AR**. Chrome asks to allow the camera / AR → **Permitir**. Move the phone slowly around the room for the 8 seconds.
 5. A table *Recursos do AR neste aparelho* appears. **Take a screenshot and send it to me.** It also fills **Limite de quadros sem AR (fps)** (inside *Carga fixa*) automatically. Open *Carga fixa* and check that the field now has a number (probably 30).

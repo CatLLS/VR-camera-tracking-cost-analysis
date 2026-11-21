@@ -9,7 +9,7 @@
 
 import * as THREE from 'three';
 
-const APP_VERSION = '2.1.0-ar-threads';
+const APP_VERSION = '2.1.1-ar-threads';
 
 // Cada thread extra trabalha THREAD_BUSY_MS a cada THREAD_PERIOD_MS (50%).
 const THREAD_BUSY_MS = 5;
@@ -195,8 +195,18 @@ function buildScene(cfg, xr) {
     renderer.render(scene, camera);
   }
 
+  // Laço de quadros do AR. O renderer.setAnimationLoop() do three.js sempre
+  // religa também o laço comum do navegador (60 Hz), que ele só desliga quando a
+  // sessão AR começa. Por isso o laço é registrado aqui, antes da sessão, e o
+  // callback de cada execução é trocado por setLoop() — chamar setAnimationLoop
+  // depois da sessão começar deixaria os dois laços rodando juntos (bug da 2.1.0).
+  let loopCb = null;
+  if (xr) renderer.setAnimationLoop((t, frame) => { if (loopCb && frame) loopCb(t, frame); });
+  function setLoop(cb) { loopCb = cb; }
+
   function dispose() {
     window.removeEventListener('resize', resize);
+    loopCb = null;
     renderer.setAnimationLoop(null);
     geo.dispose();
     mat.dispose();
@@ -206,7 +216,7 @@ function buildScene(cfg, xr) {
     canvas.remove();
   }
 
-  return { render, dispose, renderer };
+  return { render, dispose, renderer, setLoop };
 }
 
 // ---------------------------------------------------------------------------
@@ -501,6 +511,7 @@ async function runOnce() {
 
       function frame(ts, xrFrame) {
         if (done) return;
+        if (session && !xrFrame) return; // só quadros do AR contam numa sessão AR
         if (capIntervalMs && prevTs !== null && ts - prevTs < capIntervalMs - 4) {
           requestAnimationFrame(frame);
           return;
@@ -553,12 +564,12 @@ async function runOnce() {
         else if (!session) requestAnimationFrame(frame);
       }
 
-      // Na sessão AR quem dita o ritmo dos quadros é o WebXR (setAnimationLoop).
-      if (session) world.renderer.setAnimationLoop(frame);
+      // Na sessão AR quem dita o ritmo dos quadros é o WebXR.
+      if (session) world.setLoop(frame);
       else requestAnimationFrame(frame);
     });
 
-    world.renderer.setAnimationLoop(null);
+    world.setLoop(null);
     threads.stop();
     if (session && !endedByUser) await session.end().catch(() => {});
 
@@ -690,7 +701,7 @@ async function runProbe() {
       let start = null;
       let prev = null;
       session.addEventListener('end', resolve);
-      world.renderer.setAnimationLoop((ts, xrFrame) => {
+      world.setLoop((ts, xrFrame) => {
         if (start === null) start = ts;
         if (prev !== null) intervals.push(ts - prev);
         prev = ts;
@@ -701,7 +712,7 @@ async function runProbe() {
         if (ts - start >= PROBE_SECONDS * 1000 || abortRequested) resolve();
       });
     });
-    world.renderer.setAnimationLoop(null);
+    world.setLoop(null);
     await session.end().catch(() => {});
 
     const s = stats(intervals);
