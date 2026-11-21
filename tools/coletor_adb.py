@@ -6,7 +6,8 @@ Lê do aparelho, a cada intervalo:
   - scaling_cur_freq        -> frequência atual de cada núcleo (MHz)
   - thermal_zone*/temp      -> temperaturas dos sensores (°C)
   - dumpsys battery         -> nível, temperatura, tensão, contador de carga, se está carregando
-  - power_supply/battery    -> corrente instantânea (current_now), quando o aparelho permite
+  - power_supply/battery    -> corrente instantânea (current_now; no Samsung em mA,
+                               negativa = descarregando)
 
 Grava em dados/adb/<rotulo>_<data-hora>/:
   bruto.txt   saída crua de cada amostra (o que o aparelho devolveu)
@@ -31,18 +32,22 @@ from datetime import datetime
 
 SEP = "@@@"
 
-# Um único "adb shell" por amostra, para o próprio coletor pesar pouco no aparelho.
+# Um único "adb shell" por amostra e poucos processos no aparelho (um grep lê
+# vários arquivos de uma vez), para o próprio coletor pesar pouco na CPU que
+# está sendo medida. Os nomes dos sensores de temperatura não mudam: são lidos
+# uma vez só, no início (TYPES_CMD).
 SAMPLE_CMD = (
-    "cat /proc/stat | grep '^cpu';"
+    "grep '^cpu' /proc/stat;"
     f"echo {SEP}freq;"
-    "for f in /sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_cur_freq; do echo $f $(cat $f 2>/dev/null); done;"
+    "grep -H . /sys/devices/system/cpu/cpu[0-9]*/cpufreq/scaling_cur_freq 2>/dev/null;"
     f"echo {SEP}thermal;"
-    "for z in /sys/class/thermal/thermal_zone*; do echo $(cat $z/type 2>/dev/null) $(cat $z/temp 2>/dev/null); done;"
+    "grep -H . /sys/class/thermal/thermal_zone*/temp 2>/dev/null;"
     f"echo {SEP}current;"
     "cat /sys/class/power_supply/battery/current_now 2>/dev/null;"
     f"echo {SEP}battery;"
     "dumpsys battery"
 )
+TYPES_CMD = "grep -H . /sys/class/thermal/thermal_zone*/type 2>/dev/null"
 
 
 def adb_exe():
@@ -86,24 +91,31 @@ def parse_stat(lines):
 def parse_freq(lines):
     out = {}
     for line in lines:
-        m = re.search(r"/(cpu\d+)/cpufreq/scaling_cur_freq\s+(\d+)", line)
+        m = re.search(r"/(cpu\d+)/cpufreq/scaling_cur_freq:(\d+)", line)
         if m:
             out[m.group(1)] = int(m.group(2)) / 1000.0  # kHz -> MHz
     return out
 
 
-def parse_thermal(lines):
+def parse_zone_types(text):
+    """{'thermal_zone3': 'cpu-0-0-usr', ...} a partir da saída de TYPES_CMD."""
+    out = {}
+    for line in text.splitlines():
+        m = re.search(r"/(thermal_zone\d+)/type:(.+)", line.strip())
+        if m:
+            out[m.group(1)] = m.group(2).strip()
+    return out
+
+
+def parse_thermal(lines, types):
     out = {}
     counts = {}
     for line in lines:
-        parts = line.split()
-        if len(parts) < 2:
+        m = re.search(r"/(thermal_zone\d+)/temp:(-?\d+)", line)
+        if not m:
             continue
-        name, raw = " ".join(parts[:-1]), parts[-1]
-        try:
-            val = int(raw)
-        except ValueError:
-            continue
+        name = types.get(m.group(1), m.group(1))
+        val = int(m.group(2))
         # Os sensores reportam em m°C (a maioria) ou em °C.
         temp = val / 1000.0 if abs(val) > 200 else float(val)
         counts[name] = counts.get(name, 0) + 1
@@ -150,8 +162,14 @@ def main():
         devs = adb(["devices"]).stdout
     except FileNotFoundError:
         sys.exit("adb não encontrado. Extraia o Android platform-tools em tools/platform-tools (ver TestGuide).")
-    if "\tdevice" not in devs:
+    ready = [l.split("\t")[0] for l in devs.splitlines() if l.endswith("\tdevice")]
+    if not ready:
         sys.exit("Nenhum aparelho autorizado no adb. Saída de 'adb devices':\n" + devs)
+    if any(":" not in s for s in ready):
+        print("ATENÇÃO: o celular está ligado por cabo USB, então está carregando. Para medir, desconecte o cabo.")
+    if args.serial is None and len(ready) > 1:
+        # Cabo e Wi-Fi ao mesmo tempo: usa a conexão por Wi-Fi.
+        args.serial = next((s for s in ready if ":" in s), ready[0])
 
     stamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
     outdir = os.path.join(args.saida, f"{args.rotulo}_{stamp}")
@@ -162,12 +180,15 @@ def main():
     pc_before = time.time()
     phone_epoch = adb(["shell", "date", "+%s"], args.serial).stdout.strip()
     pc_after = time.time()
+    types = parse_zone_types(adb(["shell", TYPES_CMD], args.serial).stdout)
     with open(os.path.join(outdir, "meta.txt"), "w", encoding="utf-8") as fh:
         fh.write(f"rotulo={args.rotulo}\n")
         fh.write(f"aparelho={model}\nandroid={android}\n")
         fh.write(f"intervalo_s={args.intervalo}\nduracao_s={args.duracao}\n")
         fh.write(f"pc_epoch_s={(pc_before + pc_after) / 2:.3f}\ncelular_epoch_s={phone_epoch}\n")
         fh.write("obs=epoch_ms das amostras usa o relógio do PC; compare pc_epoch_s e celular_epoch_s para o desvio\n")
+        fh.write("obs=bateria_corrente_ma é o current_now do aparelho; no Samsung vem em mA, negativo = descarregando\n")
+        fh.write("sensores_temp=" + " ".join(f"{z}:{t}" for z, t in sorted(types.items())) + "\n")
 
     raw_fh = open(os.path.join(outdir, "bruto.txt"), "w", encoding="utf-8")
     csv_fh = open(os.path.join(outdir, "amostras.csv"), "w", newline="", encoding="utf-8")
@@ -181,6 +202,7 @@ def main():
     start = time.time()
     next_t = start
     samples = 0
+    slow = 0
     try:
         while time.time() - start < args.duracao:
             t0 = time.time()
@@ -206,12 +228,12 @@ def main():
 
             for core, mhz in parse_freq(sec.get("freq", [])).items():
                 rows.append(("cpu_freq_mhz", core, mhz))
-            for zone, temp in parse_thermal(sec.get("thermal", [])).items():
+            for zone, temp in parse_thermal(sec.get("thermal", []), types).items():
                 rows.append(("temp_c", zone, temp))
             cur = [l.strip() for l in sec.get("current", []) if l.strip()]
             if cur:
                 try:
-                    rows.append(("bateria_corrente_ua", "", int(cur[0])))
+                    rows.append(("bateria_corrente_ma", "", int(cur[0])))
                 except ValueError:
                     pass
             for k, v in parse_battery(sec.get("battery", [])).items():
@@ -220,6 +242,8 @@ def main():
             for metric, key, val in rows:
                 writer.writerow([t_ms, metric, key, val])
             samples += 1
+            if time.time() - t0 > args.intervalo:
+                slow += 1
             if samples % 10 == 0:
                 csv_fh.flush()
                 raw_fh.flush()
@@ -236,6 +260,10 @@ def main():
     finally:
         raw_fh.close()
         csv_fh.close()
+        with open(os.path.join(outdir, "meta.txt"), "a", encoding="utf-8") as fh:
+            fh.write(f"amostras={samples}\namostras_mais_lentas_que_o_intervalo={slow}\n")
+        if slow:
+            print(f"Aviso: {slow} de {samples} amostras demoraram mais que {args.intervalo} s.")
 
     print(f"Pronto: {samples} amostras em {outdir}")
 

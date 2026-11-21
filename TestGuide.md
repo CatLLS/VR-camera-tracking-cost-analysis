@@ -69,7 +69,7 @@ The Chrome and ARCore versions must not change between measuring days.
 ### 0.5 Write down the device info for the form (5 min)
 
 Fill in the `[PREENCHER]` of the device in `notes/projectForm.md`:
-- Configurações → Sobre o telefone: **Número do modelo** (SM-N960…), and in *Informações do software*: **Versão do Android** and **Versão da One UI**.
+- Configurações → Sobre o telefone: **Número do modelo** (yours is SM-N9600), and in *Informações do software*: **Versão do Android** and **Versão da One UI**.
 - Configurações → Assistência do aparelho → Memória: total RAM.
 - In Chrome, open `chrome://version` → the first line is the Chrome version.
 - Play Store → *Google Play Services for AR* → scroll down to *Sobre este app* → version.
@@ -90,10 +90,9 @@ The cable charges the phone, which would ruin the battery numbers, so measuremen
 ### 0.7 Test the collector (3 min)
 
 1. `python tools/coletor_adb.py --rotulo teste --duracao 10`
-2. It should print `Coletando 'teste' de SM-N960… por 10 s` and finish with `Pronto: … amostras`.
-3. Open the new folder `dados\adb\teste_…\amostras.csv` (Notepad is fine). Check that there are lines starting with a number and then `cpu_uso_pct`, `cpu_freq_mhz`, `temp_c`, `bateria_corrente_ua` and `bateria`.
-4. **Send me** (Claude) the lines with `bateria_corrente_ua`. From the size of the number I'll tell you whether Samsung reports mA or µA, which the form needs.
-5. Delete the `teste_…` folder.
+2. It should print `Coletando 'teste' de SM-N9600 (Android 10) por 10 s` and finish with `Pronto: … amostras`.
+3. Open the new folder `dados\adb\teste_…\amostras.csv` (Notepad is fine). Check that there are lines starting with a number and then `cpu_uso_pct`, `cpu_freq_mhz`, `temp_c`, `bateria_corrente_ma` and `bateria`. The collector should take about one sample per second (10 samples for 10 s); if it prints *Aviso: … amostras demoraram mais que 1.0 s* for a few samples, that's Wi-Fi delay and is fine.
+4. Delete the `teste_…` folder.
 
 ### 0.8 Feature test on the page (5 min)
 
