@@ -34,7 +34,7 @@ def main():
     adb = [adb_exe()] + (["-s", args.serial] if args.serial else [])
 
     try:
-        res = subprocess.run(adb + ["shell", "ls", "-1", ORIGEM], capture_output=True, text=True, timeout=30)
+        res = subprocess.run(adb + ["shell", "ls", "-1", ORIGEM], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=30)
     except FileNotFoundError:
         sys.exit("adb não encontrado. Extraia o Android platform-tools em tools/platform-tools (ver TestGuide).")
     nomes = [n.strip() for n in res.stdout.splitlines() if PADRAO.match(n.strip())]
@@ -42,18 +42,21 @@ def main():
         sys.exit(f"Nenhum CSV da página em {ORIGEM}. Toque em 'Baixar todas (CSV)' no celular antes.")
 
     os.makedirs(args.destino, exist_ok=True)
+    # Um arquivo que já está em qualquer lugar de dados/ (inclusive em
+    # dados/descartado/) não é copiado de novo.
+    ja_existem = {n for _, _, arquivos in os.walk("dados") for n in arquivos}
     copiados = 0
     for nome in nomes:
         alvo = os.path.join(args.destino, nome)
-        if os.path.exists(alvo):
+        if nome in ja_existem:
             continue
-        r = subprocess.run(adb + ["pull", f"{ORIGEM}/{nome}", alvo], capture_output=True, text=True, timeout=120)
+        r = subprocess.run(adb + ["pull", f"{ORIGEM}/{nome}", alvo], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
         if r.returncode != 0:
             print(f"  falhou: {nome}: {r.stderr.strip()}")
             continue
         print(f"  copiado: {nome}")
         copiados += 1
-    print(f"Pronto: {copiados} arquivo(s) novo(s) em {args.destino} ({len(nomes) - copiados} já existiam).")
+    print(f"Pronto: {copiados} arquivo(s) novo(s) em {args.destino} ({len(nomes) - copiados} já estavam em dados/).")
 
 
 if __name__ == "__main__":

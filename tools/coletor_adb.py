@@ -59,7 +59,7 @@ def adb_exe():
 
 def adb(args, serial=None, timeout=15):
     cmd = [adb_exe()] + (["-s", serial] if serial else []) + args
-    return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+    return subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=timeout)
 
 
 def split_sections(text):

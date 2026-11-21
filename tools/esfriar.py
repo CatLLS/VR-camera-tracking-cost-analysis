@@ -39,7 +39,7 @@ def adb_exe():
 
 def bateria(serial=None):
     cmd = [adb_exe()] + (["-s", serial] if serial else []) + ["shell", "dumpsys", "battery"]
-    out = subprocess.run(cmd, capture_output=True, text=True, timeout=15).stdout
+    out = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=15).stdout
     temp = re.search(r"temperature:\s*(-?\d+)", out)
     nivel = re.search(r"level:\s*(\d+)", out)
     carregando = any(re.search(rf"{k} powered:\s*true", out) for k in ("AC", "USB", "Wireless"))
