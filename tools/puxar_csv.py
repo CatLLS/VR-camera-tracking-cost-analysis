@@ -2,7 +2,8 @@
 """Copia para o PC os CSV que a página baixou no celular.
 
 Procura em /sdcard/Download os arquivos resumo_*.csv, quadros_*.csv e
-threads_*.csv e copia para dados/pagina/ os que ainda não estão lá.
+threads_*.csv e copia para dados/pagina/ os que ainda não estão em dados/
+(compara o conteúdo, não só o nome).
 
   python tools/puxar_csv.py
 
@@ -10,10 +11,13 @@ Só usa a biblioteca padrão. Usa o adb de tools/platform-tools (ou, se não exi
 """
 
 import argparse
+import filecmp
 import os
 import re
+import shutil
 import subprocess
 import sys
+import tempfile
 
 ORIGEM = "/sdcard/Download"
 PADRAO = re.compile(r"^(resumo|quadros|threads)_.*\.csv$")
@@ -42,20 +46,34 @@ def main():
         sys.exit(f"Nenhum CSV da página em {ORIGEM}. Toque em 'Baixar todas (CSV)' no celular antes.")
 
     os.makedirs(args.destino, exist_ok=True)
-    # Um arquivo que já está em qualquer lugar de dados/ (inclusive em
-    # dados/descartado/) não é copiado de novo.
-    ja_existem = {n for _, _, arquivos in os.walk("dados") for n in arquivos}
+    # Um arquivo cujo conteúdo já está em qualquer lugar de dados/ (inclusive
+    # em dados/descartado/) não é copiado de novo. Compara o conteúdo, não só o
+    # nome: o "Baixar todas" do mesmo dia gera sempre o mesmo nome.
+    ja_existem = {}
+    for pasta, _, arquivos in os.walk("dados"):
+        for n in arquivos:
+            ja_existem.setdefault(n, []).append(os.path.join(pasta, n))
+    temp = tempfile.mkdtemp()
     copiados = 0
     for nome in nomes:
-        alvo = os.path.join(args.destino, nome)
-        if nome in ja_existem:
-            continue
-        r = subprocess.run(adb + ["pull", f"{ORIGEM}/{nome}", alvo], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
+        baixado = os.path.join(temp, nome)
+        r = subprocess.run(adb + ["pull", f"{ORIGEM}/{nome}", baixado], capture_output=True, text=True, encoding="utf-8", errors="replace", timeout=120)
         if r.returncode != 0:
             print(f"  falhou: {nome}: {r.stderr.strip()}")
             continue
-        print(f"  copiado: {nome}")
+        if any(filecmp.cmp(baixado, p, shallow=False) for p in ja_existem.get(nome, [])):
+            continue
+        # Mesmo nome com conteúdo diferente: grava como "nome (2).csv", "(3)"...
+        alvo = os.path.join(args.destino, nome)
+        base, ext = os.path.splitext(nome)
+        n = 2
+        while os.path.exists(alvo):
+            alvo = os.path.join(args.destino, f"{base} ({n}){ext}")
+            n += 1
+        shutil.move(baixado, alvo)
+        print(f"  copiado: {os.path.basename(alvo)}")
         copiados += 1
+    shutil.rmtree(temp, ignore_errors=True)
     print(f"Pronto: {copiados} arquivo(s) novo(s) em {args.destino} ({len(nomes) - copiados} já estavam em dados/).")
 
 
