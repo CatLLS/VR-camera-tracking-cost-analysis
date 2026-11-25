@@ -95,7 +95,16 @@ ocupados), porque o ARCore passa a esperar na fila do escalonador ou a rodar nos
 suba conforme o número de threads extras ocupadas do jogo aumenta (de 0 para 2, 4 e 6), com um salto mais
 acentuado a partir do limite de 4 threads extras.
 
-**Frente 2 — Uso de CPU por núcleo (Caue Santana):** [PREENCHER: hipótese do Caue na Ficha 3]
+**Frente 2 — Uso de CPU por núcleo (Caue Santana):** espero que o uso médio de CPU (% do tempo ocupado)
+suba progressivamente nos núcleos livres conforme aumenta o número de threads ocupadas do jogo (de 0 para
+2 e 4), até saturar os núcleos disponíveis (próximo de 100%), estabilizando nesse patamar máximo com 6
+threads. Por quê: com 0 e 2 threads, o escalonador do Linux/Android distribui as threads do jogo, a
+renderização 3D e o rastreamento do ARCore em núcleos distintos que antes estavam ociosos, elevando a
+porcentagem de tempo ocupado de cada núcleo. Quando a soma das threads ativas (jogo + ARCore + pipeline
+gráfico) iguala ou ultrapassa o número de núcleos físicos disponíveis, especialmente os de desempenho,
+a capacidade de processamento paralelo do hardware se esgota. O que contrariaria: o uso médio por núcleo
+ficar estagnado mesmo ao adicionar 2, 4 ou 6 threads, ou as threads ficarem concentradas em apenas 1 ou
+2 núcleos.
 
 **Frente 3 — Degradação em 15 minutos (Catarina Silva e Meirelles):** espero que o p95 do tempo de quadro
 suba entre o 1º e o 15º minuto com o AR ligado, junto com a subida da temperatura e a queda da frequência
@@ -215,9 +224,11 @@ ficam com p95 parecido (~62–64 ms). Ressalvas: a temperatura da bateria contin
 (menos carga) e não do controle térmico; e com 2 repetições a diferença entre ar_t0 e ar_t6 no aumento
 (média +3,3 contra +8,8 ms) depende muito de uma repetição (+13,3 ms).
 
-**Frente 4 (Thomas):** com AR, a corrente média de descarga subiu de 1566 mA (0 threads) para 1799 mA
-(2 threads) e depois quase parou: 1832 mA (4) e 1887 mA (6), +3% de 4 para 6 threads. Ou seja, houve um
-patamar como o previsto, mas ele começou já em 2 threads, e não em 4. A CPU também não chegou a 100%
+**Frente 4 (Thomas):** *os dados sustentam a hipótese*. Com AR, a corrente média de descarga salta de
+1566 mA (0 threads) para 1799 mA (2 threads), +233 mA, porque o escalonador mantém mais núcleos ativos ao
+mesmo tempo para atender às threads do jogo, da renderização e do rastreamento do ARCore, o que impede os
+núcleos de entrar em estados de economia de energia (idle). Depois a corrente quase para: 1832 mA (4) e
+1887 mA (6), +3% de 4 para 6 threads; o patamar começou já em 2 threads. A CPU também não chegou a 100%
 (81,6% com 6 threads), então o patamar não vem da saturação de todos os núcleos. Sem AR, a corrente
 continuou subindo até 6 threads (469, 490, 810 e 928 mA). O ARCore acrescentou ~960 a ~1310 mA (cerca de
 3,3 a 4,7 W); em proporção, o custo caiu de +234% (0 threads) para +103% (6 threads), porque a corrente
