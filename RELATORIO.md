@@ -91,9 +91,11 @@ threads ocupadas do jogo sobe, com um salto quando as threads do jogo, da render
 a ser mais que os núcleos livres (a partir de 4 threads extras, quando os 4 núcleos rápidos ficam
 ocupados), porque o ARCore passa a esperar na fila do escalonador ou a rodar nos núcleos econômicos.
 
-**Frente 1 — p95 do tempo de quadro (Mateus Sarmento):** [PREENCHER: hipótese da Ficha 3]
+**Frente 1 — p95 do tempo de quadro (Mateus Sarmento):** espero que o p95 do tempo de quadro com ARCore
+suba conforme o número de threads extras ocupadas do jogo aumenta (de 0 para 2, 4 e 6), com um salto mais
+acentuado a partir do limite de 4 threads extras.
 
-**Frente 2 — Uso de CPU por núcleo (Caue Santana):** [PREENCHER: hipótese da Ficha 3]
+**Frente 2 — Uso de CPU por núcleo (Caue Santana):** [PREENCHER: hipótese do Caue na Ficha 3]
 
 **Frente 3 — Degradação em 15 minutos (Catarina Silva e Meirelles):** espero que o p95 do tempo de quadro
 suba entre o 1º e o 15º minuto com o AR ligado, junto com a subida da temperatura e a queda da frequência
@@ -103,7 +105,14 @@ trabalham perto do limite e o celular esquenta; o controle térmico do Android r
 permitida pelo cpufreq (*thermal throttling*), e cada quadro passa a demorar mais. O que contrariaria: o
 p95 do 15º minuto igual ao do 1º mesmo com a temperatura subindo; a frequência dos Gold não cair.
 
-**Frente 4 — Bateria (Thomas Bulhõez):** [PREENCHER: hipótese da Ficha 3]
+**Frente 4 — Bateria (Thomas Bulhõez):** espero que a corrente média de descarga aumente conforme o número
+de threads ocupadas pelo jogo sobe de 0 para 2 e 4, mas estabilize em um patamar máximo a partir de 4
+threads extras, quando a capacidade total dos núcleos da CPU se esgota. Por quê: com mais threads do jogo
+disputando os mesmos núcleos com as threads do rastreamento do ARCore e da renderização, o escalonador
+precisa manter os núcleos ativos por mais tempo e fazer mais trocas de contexto; isso impede que os
+núcleos entrem em estados de economia de energia (idle), elevando o consumo, mas só até a saturação dos
+núcleos, a partir de 4 threads. O que contrariaria: a corrente diminuir, ficar constante desde 0 threads
+ou continuar subindo depois que todos os núcleos atingirem 100% de ocupação.
 
 ## 4. Resultados
 
@@ -159,10 +168,10 @@ Todos os gráficos: [`analise/graficos/`](analise/graficos/).
 Como o modo sem AR ficou em 33,5 ms em todas as condições (limitado a 30 fps), a queda vem do p95 com AR,
 que diminuiu de 52,6 para 46,8–47,9 ms. Os dados das outras frentes mostram o que o sistema fez:
 
-- **O ARCore foi parar principalmente nos núcleos Silver.** Com AR, o uso dos Silver subiu 23 a 37
-  pontos percentuais em todas as condições (ex.: 41% → 64% com 0 threads), enquanto as threads do jogo
-  ocupam os Gold (sem AR, os Gold vão de 12% com 0 threads a 76% com 6). Ou seja, o escalonador não pôs o
-  ARCore na mesma fila das threads do jogo até as 6 threads.
+- **O trabalho extra do ARCore foi sendo empurrado para os núcleos Silver.** Sem AR, as threads do jogo
+  ocupam os Gold (de 12% com 0 threads a 76% com 6). Com 0 threads, o AR aumentou o uso dos dois grupos
+  (Silver +23, Gold +36 pontos percentuais); à medida que as threads do jogo tomam os Gold, o acréscimo
+  do AR aparece cada vez mais nos Silver e menos nos Gold (com 6 threads: Silver +37, Gold +12).
 - **Com mais trabalho, o governador subiu o clock dos Gold.** Com AR, a frequência média dos Gold foi de
   2035 MHz (0 threads) para ~2400 MHz (2 e 4 threads) ([`F2_5`](analise/graficos/F2_5_frequencia_cpu.png)).
   Nossa interpretação: a parte do quadro que roda nos Gold (renderização e parte do ARCore) fica mais
@@ -173,12 +182,22 @@ que diminuiu de 52,6 para 46,8–47,9 ms. Os dados das outras frentes mostram o 
   mais trabalho com AR (7225 contra 4753), por causa do clock mais alto
   ([`F2_4`](analise/graficos/F2_4_vazao_threads_do_jogo.png)).
 
-**Frente 1 (Mateus):** veredito do integrante: *os dados contrariam a hipótese*. Com AR: 52,6 ms
-(+19,1), 49,2 ms (+15,7), 46,8 ms (+13,3) e 47,9 ms (+14,4) com 0, 2, 4 e 6 threads; sem AR, 33,5 ms em
-todas. [PREENCHER: discussão do integrante]
+**Frente 1 (Mateus):** *os dados contrariam a hipótese*. Com AR, o p95 foi de 52,6 ms (+19,1 ms em
+relação ao sem AR) com 0 threads para 49,2 ms (+15,7), 46,8 ms (+13,3) e 47,9 ms (+14,4) com 2, 4 e 6
+threads; sem AR, ficou em 33,5 ms (30 fps) em todas as condições. De 0 para 4 threads, o p95 com AR caiu
+5,8 ms (~11%), mesmo com a CPU subindo de 55,9% para 73,8%. Com pouca carga (0 threads), o governador
+de frequência (DVFS) mantém os núcleos em clocks mais baixos, o que causa picos de latência; com 4
+threads, a carga constante faz o sistema manter frequências mais altas e estáveis. Só com 6 threads
+(81,6% de CPU) o p95 volta a subir (+1,1 ms), sinal de início de disputa por CPU ou de *throttling*.
 
-**Frente 2 (Caue):** veredito do integrante: *os dados sustentam a hipótese*. CPU total com AR: 55,9%
-± 3,2 (0 threads), 63,5% ± 4,6 (2), 73,8% ± 1,8 (4) e 81,6% ± 2,4 (6). [PREENCHER: discussão do integrante]
+**Frente 2 (Caue):** *os dados sustentam a hipótese*. CPU total com AR (média dos 8 núcleos): sobe de
+55,9% ± 3,2 (0 threads) para 63,5% ± 4,6 (2), 73,8% ± 1,8 (4) e 81,6% ± 2,4 (6). No Galaxy Note 9, o
+escalonador do Android concentra tarefas leves nos 4 núcleos Silver e direciona as cargas pesadas, como o
+ARCore e até 4 threads extras do jogo, para os 4 núcleos Gold, que chegam a 78% de uso a 2,4 GHz. Ao
+rodar 6 threads junto com o AR, os Gold saturam (87%) e o sistema precisa transbordar o excesso para os
+Silver, mais lentos (76%). Isso reduz o impacto marginal do AR na CPU (de +29,7 para +24,1 pontos
+percentuais) e derruba em 33% o trabalho feito por thread do jogo (de 7225 unidades/s com 2 threads para
+4811 com 6), por causa das filas de espera.
 
 **Frente 3 (Catarina):** *os dados sustentam a hipótese*, com as ressalvas abaixo. Nas 4 execuções o p95
 subiu entre o 1º e o 15º minuto (+3,0 e +3,5 ms com 0 threads; +13,3 e +4,2 ms com 6), a bateria
@@ -196,9 +215,13 @@ ficam com p95 parecido (~62–64 ms). Ressalvas: a temperatura da bateria contin
 (menos carga) e não do controle térmico; e com 2 repetições a diferença entre ar_t0 e ar_t6 no aumento
 (média +3,3 contra +8,8 ms) depende muito de uma repetição (+13,3 ms).
 
-**Frente 4 (Thomas):** [PREENCHER: veredito e discussão do integrante]. O ARCore acrescentou ~960 a
-~1310 mA de corrente (cerca de 3,3 a 4,7 W). Em proporção, o custo caiu de +234% (0 threads) para +103%
-(6 threads), porque a corrente sem AR também sobe com as threads.
+**Frente 4 (Thomas):** com AR, a corrente média de descarga subiu de 1566 mA (0 threads) para 1799 mA
+(2 threads) e depois quase parou: 1832 mA (4) e 1887 mA (6), +3% de 4 para 6 threads. Ou seja, houve um
+patamar como o previsto, mas ele começou já em 2 threads, e não em 4. A CPU também não chegou a 100%
+(81,6% com 6 threads), então o patamar não vem da saturação de todos os núcleos. Sem AR, a corrente
+continuou subindo até 6 threads (469, 490, 810 e 928 mA). O ARCore acrescentou ~960 a ~1310 mA (cerca de
+3,3 a 4,7 W); em proporção, o custo caiu de +234% (0 threads) para +103% (6 threads), porque a corrente
+sem AR também sobe com as threads.
 
 ## 6. Limites
 
