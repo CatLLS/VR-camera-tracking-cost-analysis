@@ -1,0 +1,4 @@
+tipo,id,campo,valor_correto,motivo
+pagina,2026-11-24T19-36-53-212Z_ar_t6_r3,rep,4,"Segunda execução ar_t6 marcada r3; pela ordem da rodada 4 (ar/sem-ar t6, t0, t4, t2) é a ar_t6 da rodada 4, feita logo antes de sem-ar_t6_r4"
+coletor,ar_t6_r3_2026-11-24T17-37-07,rotulo,ar_t6_r4,"Mesma execução acima: rótulo do coletor ficou com r3"
+coletor,ar_t0_2026-11-21T13-01-53,rotulo,ar_t0_r1,"Rótulo digitado sem _r1"

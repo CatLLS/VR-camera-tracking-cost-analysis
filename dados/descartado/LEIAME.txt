@@ -1,0 +1,14 @@
+Dados descartados — guardados para registro, fora da análise.
+
+v2.1.0_laco_duplicado/ (21/11/2026)
+  Execuções feitas com a página na versão 2.1.0-ar-threads: o ensaio, sem-ar_t0_r1
+  e duas tentativas de ar_t0. Nas execuções AR havia um bug: rodavam dois laços de
+  quadros ao mesmo tempo (o do AR, ~30 fps, e um laço comum de 60 fps sem dados do
+  AR). O laço extra desenhava a cena de novo e seus quadros eram contados como
+  "rastreamento perdido" (~20% de rastreamento completo). Corrigido na 2.1.1.
+  A execução sem-ar_t0_r1 não foi afetada, mas foi refeita para que todas as
+  execuções usem a mesma versão da página.
+
+v1_pose_teste/ (11/11/2026)
+  Teste da primeira versão (rastreador de pose MediaPipe, 480p), antes da troca
+  para o ARCore.

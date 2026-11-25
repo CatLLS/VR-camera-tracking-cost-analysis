@@ -1,0 +1,12 @@
+rotulo=ensaio
+aparelho=SM-N9600
+android=10
+intervalo_s=1.0
+duracao_s=50.0
+pc_epoch_s=1795274365.502
+celular_epoch_s=1795274365
+obs=epoch_ms das amostras usa o relógio do PC; compare pc_epoch_s e celular_epoch_s para o desvio
+obs=bateria_corrente_ma é o current_now do aparelho; no Samsung vem em mA, negativo = descarregando
+sensores_temp=thermal_zone0:aoss0-usr thermal_zone1:cpu0-silver-usr thermal_zone10:cpu3-gold-usr thermal_zone11:gpu0-usr thermal_zone12:gpu1-usr thermal_zone13:aoss1-usr thermal_zone14:mdm-dsp-usr thermal_zone15:ddr-usr thermal_zone16:wlan-usr thermal_zone17:compute-hvx-usr thermal_zone18:camera-usr thermal_zone19:mmss-usr thermal_zone2:cpu1-silver-usr thermal_zone20:mdm-core-usr thermal_zone21:gpu-virt-max-step thermal_zone22:silv-virt-max-step thermal_zone23:gold-virt-max-step thermal_zone24:pop-mem-step thermal_zone25:cpu0-silver-step thermal_zone26:cpu1-silver-step thermal_zone27:cpu2-silver-step thermal_zone28:cpu3-silver-step thermal_zone29:cpu0-gold-step thermal_zone3:cpu2-silver-usr thermal_zone30:cpu1-gold-step thermal_zone31:cpu2-gold-step thermal_zone32:cpu3-gold-step thermal_zone33:lmh-dcvs-01 thermal_zone34:lmh-dcvs-00 thermal_zone35:pm8998_tz thermal_zone36:pm8005_tz thermal_zone37:aoss0-lowf thermal_zone38:cpu0-silver-lowf thermal_zone39:cpu1-silver-lowf thermal_zone4:cpu3-silver-usr thermal_zone40:cpu2-silver-lowf thermal_zone41:cpu3-silver-lowf thermal_zone42:kryo-l3-0-lowf thermal_zone43:kryo-l3-1-lowf thermal_zone44:cpu0-gold-lowf thermal_zone45:cpu1-gold-lowf thermal_zone46:cpu2-gold-lowf thermal_zone47:cpu3-gold-lowf thermal_zone48:gpu0-lowf thermal_zone49:gpu1-lowf thermal_zone5:kryo-l3-0-usr thermal_zone50:aoss1-lowf thermal_zone51:mdm-dsp-lowf thermal_zone52:ddr-lowf thermal_zone53:wlan-lowf thermal_zone54:compute-hvx-lowf thermal_zone55:camera-lowf thermal_zone56:mmss-lowf thermal_zone57:mdm-core-lowf thermal_zone58:xo-therm-adc thermal_zone59:msm-therm-adc thermal_zone6:kryo-l3-1-usr thermal_zone60:pa-therm1-adc thermal_zone61:quiet-therm-adc thermal_zone62:ac thermal_zone63:battery thermal_zone7:cpu0-gold-usr thermal_zone8:cpu1-gold-usr thermal_zone9:cpu2-gold-usr
+amostras=50
+amostras_mais_lentas_que_o_intervalo=0

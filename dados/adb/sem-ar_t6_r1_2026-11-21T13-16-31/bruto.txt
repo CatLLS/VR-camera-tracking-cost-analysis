@@ -1,0 +1,1040 @@
+### 1795277792968
+cpu  8154392 1792795 6779614 76213455 507063 896728 634153 0 0 0
+cpu0 1355798 283450 1616600 7713816 135683 431758 314241 0 0 0
+cpu1 1414513 297337 1331997 8082229 105141 120109 62860 0 0 0
+cpu2 1289818 259123 1174191 8566009 74836 108277 68782 0 0 0
+cpu3 1188559 234979 1064777 8954966 58929 102272 56051 0 0 0
+cpu4 868492 227232 509587 10189592 41045 66837 84746 0 0 0
+cpu5 689933 169907 434127 10711668 32508 22207 31507 0 0 0
+cpu6 733752 176589 352958 10838490 32209 23094 9456 0 0 0
+cpu7 613527 144178 295377 11156681 26709 22170 6506 0 0 0
+@@@freq
+/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu1/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu2/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu4/cpufreq/scaling_cur_freq:2553600
+/sys/devices/system/cpu/cpu5/cpufreq/scaling_cur_freq:2553600
+/sys/devices/system/cpu/cpu6/cpufreq/scaling_cur_freq:2553600
+/sys/devices/system/cpu/cpu7/cpufreq/scaling_cur_freq:2553600
+@@@thermal
+/sys/class/thermal/thermal_zone0/temp:44000
+/sys/class/thermal/thermal_zone1/temp:47600
+/sys/class/thermal/thermal_zone10/temp:45900
+/sys/class/thermal/thermal_zone11/temp:40400
+/sys/class/thermal/thermal_zone12/temp:41300
+/sys/class/thermal/thermal_zone13/temp:42300
+/sys/class/thermal/thermal_zone14/temp:40300
+/sys/class/thermal/thermal_zone15/temp:40300
+/sys/class/thermal/thermal_zone16/temp:40300
+/sys/class/thermal/thermal_zone17/temp:39700
+/sys/class/thermal/thermal_zone18/temp:42000
+/sys/class/thermal/thermal_zone19/temp:40300
+/sys/class/thermal/thermal_zone2/temp:45000
+/sys/class/thermal/thermal_zone20/temp:40000
+/sys/class/thermal/thermal_zone21/temp:41000
+/sys/class/thermal/thermal_zone22/temp:49600
+/sys/class/thermal/thermal_zone23/temp:50500
+/sys/class/thermal/thermal_zone24/temp:40300
+/sys/class/thermal/thermal_zone25/temp:47600
+/sys/class/thermal/thermal_zone26/temp:45000
+/sys/class/thermal/thermal_zone27/temp:45600
+/sys/class/thermal/thermal_zone28/temp:49600
+/sys/class/thermal/thermal_zone29/temp:50500
+/sys/class/thermal/thermal_zone3/temp:45600
+/sys/class/thermal/thermal_zone30/temp:48900
+/sys/class/thermal/thermal_zone31/temp:48900
+/sys/class/thermal/thermal_zone32/temp:45900
+/sys/class/thermal/thermal_zone33/temp:75000
+/sys/class/thermal/thermal_zone34/temp:75000
+/sys/class/thermal/thermal_zone35/temp:39893
+/sys/class/thermal/thermal_zone36/temp:37000
+/sys/class/thermal/thermal_zone37/temp:44300
+/sys/class/thermal/thermal_zone38/temp:47600
+/sys/class/thermal/thermal_zone39/temp:45300
+/sys/class/thermal/thermal_zone4/temp:48600
+/sys/class/thermal/thermal_zone40/temp:45900
+/sys/class/thermal/thermal_zone41/temp:48600
+/sys/class/thermal/thermal_zone42/temp:48900
+/sys/class/thermal/thermal_zone43/temp:49200
+/sys/class/thermal/thermal_zone44/temp:48600
+/sys/class/thermal/thermal_zone45/temp:50500
+/sys/class/thermal/thermal_zone46/temp:47300
+/sys/class/thermal/thermal_zone47/temp:47900
+/sys/class/thermal/thermal_zone48/temp:40400
+/sys/class/thermal/thermal_zone49/temp:41300
+/sys/class/thermal/thermal_zone5/temp:48900
+/sys/class/thermal/thermal_zone50/temp:42300
+/sys/class/thermal/thermal_zone51/temp:40300
+/sys/class/thermal/thermal_zone52/temp:40300
+/sys/class/thermal/thermal_zone53/temp:40300
+/sys/class/thermal/thermal_zone54/temp:39700
+/sys/class/thermal/thermal_zone55/temp:42000
+/sys/class/thermal/thermal_zone56/temp:40300
+/sys/class/thermal/thermal_zone57/temp:40000
+/sys/class/thermal/thermal_zone58/temp:40116
+/sys/class/thermal/thermal_zone59/temp:40406
+/sys/class/thermal/thermal_zone6/temp:49200
+/sys/class/thermal/thermal_zone60/temp:37812
+/sys/class/thermal/thermal_zone61/temp:10787
+/sys/class/thermal/thermal_zone62/temp:39400
+/sys/class/thermal/thermal_zone63/temp:34600
+/sys/class/thermal/thermal_zone7/temp:47300
+/sys/class/thermal/thermal_zone8/temp:47900
+/sys/class/thermal/thermal_zone9/temp:49600
+@@@current
+-160
+@@@battery
+Current Battery Service state:
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Max charging current: 0
+  Max charging voltage: 0
+  Charge counter: 2476980
+  status: 3
+  health: 2
+  present: true
+  level: 65
+  scale: 100
+  voltage: 3815
+  temperature: 346
+  technology: Li-ion
+  batteryMiscEvent: 983040
+  batteryCurrentEvent: 64
+  mSecPlugTypeSummary: 0
+  LED Charging: true
+  LED Low Battery: true
+  current now: -160
+  charge counter: 2476980
+  Adaptive Fast Charging Settings: true
+  Super Fast Charging Settings: false
+USE_FAKE_BATTERY: false
+FEATURE_WIRELESS_FAST_CHARGER_CONTROL: true
+  mWasUsedWirelessFastChargerPreviously: false
+  mWirelessFastChargingSettingsEnable: true
+LLB CAL: 20190605
+LLB MAN: 
+LLB CURRENT: YEAR2026M11D18
+LLB DIFF: 388
+FEATURE_HICCUP_CONTROL: true
+FEATURE_SUPPORTED_DAILY_BOARD: false
+SEC_FEATURE_USE_WIRELESS_POWER_SHARING: false
+BatteryInfoBackUp
+  mSavedBatteryAsoc: 83
+  mSavedBatteryMaxTemp: 647
+  mSavedBatteryMaxCurrent: 2931
+  mSavedBatteryUsage: 218090
+  FEATURE_SAVE_BATTERY_CYCLE: true
+  SEC_FEATURE_PREVENT_SWELLING: false
+
+### 1795277793978
+cpu  8154715 1792808 6779782 76213807 507067 896745 634158 0 0 0
+cpu0 1355819 283450 1616612 7713874 135683 431766 314245 0 0 0
+cpu1 1414531 297339 1332019 8082297 105142 120111 62860 0 0 0
+cpu2 1289832 259124 1174209 8566082 74836 108278 68782 0 0 0
+cpu3 1188581 234981 1064790 8955034 58929 102273 56051 0 0 0
+cpu4 868551 227237 509611 10189613 41045 66838 84746 0 0 0
+cpu5 689984 169908 434166 10711689 32509 22208 31508 0 0 0
+cpu6 733818 176589 352981 10838509 32209 23095 9456 0 0 0
+cpu7 613599 144180 295394 11156706 26709 22171 6506 0 0 0
+@@@freq
+/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu1/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu2/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu4/cpufreq/scaling_cur_freq:2649600
+/sys/devices/system/cpu/cpu5/cpufreq/scaling_cur_freq:2649600
+/sys/devices/system/cpu/cpu6/cpufreq/scaling_cur_freq:2649600
+/sys/devices/system/cpu/cpu7/cpufreq/scaling_cur_freq:2649600
+@@@thermal
+/sys/class/thermal/thermal_zone0/temp:62700
+/sys/class/thermal/thermal_zone1/temp:64700
+/sys/class/thermal/thermal_zone10/temp:69900
+/sys/class/thermal/thermal_zone11/temp:41700
+/sys/class/thermal/thermal_zone12/temp:44600
+/sys/class/thermal/thermal_zone13/temp:64100
+/sys/class/thermal/thermal_zone14/temp:42000
+/sys/class/thermal/thermal_zone15/temp:47300
+/sys/class/thermal/thermal_zone16/temp:45900
+/sys/class/thermal/thermal_zone17/temp:43300
+/sys/class/thermal/thermal_zone18/temp:50900
+/sys/class/thermal/thermal_zone19/temp:41300
+/sys/class/thermal/thermal_zone2/temp:57400
+/sys/class/thermal/thermal_zone20/temp:44000
+/sys/class/thermal/thermal_zone21/temp:44600
+/sys/class/thermal/thermal_zone22/temp:68900
+/sys/class/thermal/thermal_zone23/temp:75800
+/sys/class/thermal/thermal_zone24/temp:47300
+/sys/class/thermal/thermal_zone25/temp:64700
+/sys/class/thermal/thermal_zone26/temp:57400
+/sys/class/thermal/thermal_zone27/temp:59700
+/sys/class/thermal/thermal_zone28/temp:68900
+/sys/class/thermal/thermal_zone29/temp:75500
+/sys/class/thermal/thermal_zone3/temp:59700
+/sys/class/thermal/thermal_zone30/temp:75800
+/sys/class/thermal/thermal_zone31/temp:72600
+/sys/class/thermal/thermal_zone32/temp:69300
+/sys/class/thermal/thermal_zone33/temp:75000
+/sys/class/thermal/thermal_zone34/temp:75000
+/sys/class/thermal/thermal_zone35/temp:42181
+/sys/class/thermal/thermal_zone36/temp:37000
+/sys/class/thermal/thermal_zone37/temp:62400
+/sys/class/thermal/thermal_zone38/temp:65300
+/sys/class/thermal/thermal_zone39/temp:58100
+/sys/class/thermal/thermal_zone4/temp:68300
+/sys/class/thermal/thermal_zone40/temp:59700
+/sys/class/thermal/thermal_zone41/temp:68300
+/sys/class/thermal/thermal_zone42/temp:64000
+/sys/class/thermal/thermal_zone43/temp:65300
+/sys/class/thermal/thermal_zone44/temp:77200
+/sys/class/thermal/thermal_zone45/temp:77500
+/sys/class/thermal/thermal_zone46/temp:76800
+/sys/class/thermal/thermal_zone47/temp:68600
+/sys/class/thermal/thermal_zone48/temp:42000
+/sys/class/thermal/thermal_zone49/temp:44600
+/sys/class/thermal/thermal_zone5/temp:64000
+/sys/class/thermal/thermal_zone50/temp:64100
+/sys/class/thermal/thermal_zone51/temp:42000
+/sys/class/thermal/thermal_zone52/temp:47300
+/sys/class/thermal/thermal_zone53/temp:45900
+/sys/class/thermal/thermal_zone54/temp:43300
+/sys/class/thermal/thermal_zone55/temp:50900
+/sys/class/thermal/thermal_zone56/temp:41300
+/sys/class/thermal/thermal_zone57/temp:44000
+/sys/class/thermal/thermal_zone58/temp:40116
+/sys/class/thermal/thermal_zone59/temp:43081
+/sys/class/thermal/thermal_zone6/temp:65700
+/sys/class/thermal/thermal_zone60/temp:37812
+/sys/class/thermal/thermal_zone61/temp:10787
+/sys/class/thermal/thermal_zone62/temp:39400
+/sys/class/thermal/thermal_zone63/temp:34600
+/sys/class/thermal/thermal_zone7/temp:76200
+/sys/class/thermal/thermal_zone8/temp:72900
+/sys/class/thermal/thermal_zone9/temp:71900
+@@@current
+-160
+@@@battery
+Current Battery Service state:
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Max charging current: 0
+  Max charging voltage: 0
+  Charge counter: 2476980
+  status: 3
+  health: 2
+  present: true
+  level: 65
+  scale: 100
+  voltage: 3815
+  temperature: 346
+  technology: Li-ion
+  batteryMiscEvent: 983040
+  batteryCurrentEvent: 64
+  mSecPlugTypeSummary: 0
+  LED Charging: true
+  LED Low Battery: true
+  current now: -160
+  charge counter: 2476980
+  Adaptive Fast Charging Settings: true
+  Super Fast Charging Settings: false
+USE_FAKE_BATTERY: false
+FEATURE_WIRELESS_FAST_CHARGER_CONTROL: true
+  mWasUsedWirelessFastChargerPreviously: false
+  mWirelessFastChargingSettingsEnable: true
+LLB CAL: 20190605
+LLB MAN: 
+LLB CURRENT: YEAR2026M11D18
+LLB DIFF: 388
+FEATURE_HICCUP_CONTROL: true
+FEATURE_SUPPORTED_DAILY_BOARD: false
+SEC_FEATURE_USE_WIRELESS_POWER_SHARING: false
+BatteryInfoBackUp
+  mSavedBatteryAsoc: 83
+  mSavedBatteryMaxTemp: 647
+  mSavedBatteryMaxCurrent: 2931
+  mSavedBatteryUsage: 218090
+  FEATURE_SAVE_BATTERY_CYCLE: true
+  SEC_FEATURE_PREVENT_SWELLING: false
+
+### 1795277795034
+cpu  8155251 1792808 6779940 76213981 507067 896766 634164 0 0 0
+cpu0 1355866 283450 1616632 7713909 135683 431776 314249 0 0 0
+cpu1 1414579 297339 1332040 8082336 105142 120113 62861 0 0 0
+cpu2 1289881 259124 1174233 8566119 74837 108281 68782 0 0 0
+cpu3 1188616 234981 1064814 8955078 58929 102275 56051 0 0 0
+cpu4 868633 227237 509636 10189617 41045 66839 84746 0 0 0
+cpu5 690078 169908 434182 10711694 32509 22209 31509 0 0 0
+cpu6 733909 176589 352995 10838515 32209 23097 9457 0 0 0
+cpu7 613689 144180 295408 11156711 26709 22172 6507 0 0 0
+@@@freq
+/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu1/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu2/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu4/cpufreq/scaling_cur_freq:2803200
+/sys/devices/system/cpu/cpu5/cpufreq/scaling_cur_freq:2803200
+/sys/devices/system/cpu/cpu6/cpufreq/scaling_cur_freq:2803200
+/sys/devices/system/cpu/cpu7/cpufreq/scaling_cur_freq:2803200
+@@@thermal
+/sys/class/thermal/thermal_zone0/temp:72200
+/sys/class/thermal/thermal_zone1/temp:71600
+/sys/class/thermal/thermal_zone10/temp:83700
+/sys/class/thermal/thermal_zone11/temp:45900
+/sys/class/thermal/thermal_zone12/temp:49600
+/sys/class/thermal/thermal_zone13/temp:70100
+/sys/class/thermal/thermal_zone14/temp:46300
+/sys/class/thermal/thermal_zone15/temp:52900
+/sys/class/thermal/thermal_zone16/temp:54500
+/sys/class/thermal/thermal_zone17/temp:48600
+/sys/class/thermal/thermal_zone18/temp:63500
+/sys/class/thermal/thermal_zone19/temp:44600
+/sys/class/thermal/thermal_zone2/temp:67000
+/sys/class/thermal/thermal_zone20/temp:48900
+/sys/class/thermal/thermal_zone21/temp:49600
+/sys/class/thermal/thermal_zone22/temp:76800
+/sys/class/thermal/thermal_zone23/temp:85400
+/sys/class/thermal/thermal_zone24/temp:52900
+/sys/class/thermal/thermal_zone25/temp:71600
+/sys/class/thermal/thermal_zone26/temp:67300
+/sys/class/thermal/thermal_zone27/temp:69900
+/sys/class/thermal/thermal_zone28/temp:76800
+/sys/class/thermal/thermal_zone29/temp:76800
+/sys/class/thermal/thermal_zone3/temp:69900
+/sys/class/thermal/thermal_zone30/temp:84400
+/sys/class/thermal/thermal_zone31/temp:85400
+/sys/class/thermal/thermal_zone32/temp:83400
+/sys/class/thermal/thermal_zone33/temp:75000
+/sys/class/thermal/thermal_zone34/temp:75000
+/sys/class/thermal/thermal_zone35/temp:44871
+/sys/class/thermal/thermal_zone36/temp:37000
+/sys/class/thermal/thermal_zone37/temp:72600
+/sys/class/thermal/thermal_zone38/temp:72600
+/sys/class/thermal/thermal_zone39/temp:67600
+/sys/class/thermal/thermal_zone4/temp:76800
+/sys/class/thermal/thermal_zone40/temp:69600
+/sys/class/thermal/thermal_zone41/temp:76800
+/sys/class/thermal/thermal_zone42/temp:73900
+/sys/class/thermal/thermal_zone43/temp:73500
+/sys/class/thermal/thermal_zone44/temp:77500
+/sys/class/thermal/thermal_zone45/temp:81100
+/sys/class/thermal/thermal_zone46/temp:85000
+/sys/class/thermal/thermal_zone47/temp:79800
+/sys/class/thermal/thermal_zone48/temp:45900
+/sys/class/thermal/thermal_zone49/temp:49600
+/sys/class/thermal/thermal_zone5/temp:73900
+/sys/class/thermal/thermal_zone50/temp:70100
+/sys/class/thermal/thermal_zone51/temp:46300
+/sys/class/thermal/thermal_zone52/temp:52900
+/sys/class/thermal/thermal_zone53/temp:54500
+/sys/class/thermal/thermal_zone54/temp:48600
+/sys/class/thermal/thermal_zone55/temp:63500
+/sys/class/thermal/thermal_zone56/temp:44600
+/sys/class/thermal/thermal_zone57/temp:48900
+/sys/class/thermal/thermal_zone58/temp:40465
+/sys/class/thermal/thermal_zone59/temp:47532
+/sys/class/thermal/thermal_zone6/temp:73900
+/sys/class/thermal/thermal_zone60/temp:37760
+/sys/class/thermal/thermal_zone61/temp:10787
+/sys/class/thermal/thermal_zone62/temp:39400
+/sys/class/thermal/thermal_zone63/temp:34600
+/sys/class/thermal/thermal_zone7/temp:75800
+/sys/class/thermal/thermal_zone8/temp:83700
+/sys/class/thermal/thermal_zone9/temp:85000
+@@@current
+-160
+@@@battery
+Current Battery Service state:
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Max charging current: 0
+  Max charging voltage: 0
+  Charge counter: 2476980
+  status: 3
+  health: 2
+  present: true
+  level: 65
+  scale: 100
+  voltage: 3815
+  temperature: 346
+  technology: Li-ion
+  batteryMiscEvent: 983040
+  batteryCurrentEvent: 64
+  mSecPlugTypeSummary: 0
+  LED Charging: true
+  LED Low Battery: true
+  current now: -160
+  charge counter: 2476980
+  Adaptive Fast Charging Settings: true
+  Super Fast Charging Settings: false
+USE_FAKE_BATTERY: false
+FEATURE_WIRELESS_FAST_CHARGER_CONTROL: true
+  mWasUsedWirelessFastChargerPreviously: false
+  mWirelessFastChargingSettingsEnable: true
+LLB CAL: 20190605
+LLB MAN: 
+LLB CURRENT: YEAR2026M11D18
+LLB DIFF: 388
+FEATURE_HICCUP_CONTROL: true
+FEATURE_SUPPORTED_DAILY_BOARD: false
+SEC_FEATURE_USE_WIRELESS_POWER_SHARING: false
+BatteryInfoBackUp
+  mSavedBatteryAsoc: 83
+  mSavedBatteryMaxTemp: 647
+  mSavedBatteryMaxCurrent: 2931
+  mSavedBatteryUsage: 218090
+  FEATURE_SAVE_BATTERY_CYCLE: true
+  SEC_FEATURE_PREVENT_SWELLING: false
+
+### 1795277796109
+cpu  8155646 1792808 6780086 76214104 507067 896783 634170 0 0 0
+cpu0 1355889 283450 1616658 7713931 135683 431783 314253 0 0 0
+cpu1 1414618 297339 1332061 8082360 105142 120115 62861 0 0 0
+cpu2 1289921 259124 1174251 8566142 74837 108283 68783 0 0 0
+cpu3 1188651 234981 1064831 8955106 58929 102277 56051 0 0 0
+cpu4 868696 227237 509653 10189623 41045 66840 84746 0 0 0
+cpu5 690129 169908 434211 10711699 32509 22210 31509 0 0 0
+cpu6 733979 176589 353005 10838522 32209 23098 9457 0 0 0
+cpu7 613763 144180 295416 11156719 26709 22173 6507 0 0 0
+@@@freq
+/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu1/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu2/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu4/cpufreq/scaling_cur_freq:2803200
+/sys/devices/system/cpu/cpu5/cpufreq/scaling_cur_freq:2803200
+/sys/devices/system/cpu/cpu6/cpufreq/scaling_cur_freq:2803200
+/sys/devices/system/cpu/cpu7/cpufreq/scaling_cur_freq:2803200
+@@@thermal
+/sys/class/thermal/thermal_zone0/temp:68000
+/sys/class/thermal/thermal_zone1/temp:74900
+/sys/class/thermal/thermal_zone10/temp:81400
+/sys/class/thermal/thermal_zone11/temp:50500
+/sys/class/thermal/thermal_zone12/temp:53200
+/sys/class/thermal/thermal_zone13/temp:68400
+/sys/class/thermal/thermal_zone14/temp:50900
+/sys/class/thermal/thermal_zone15/temp:54900
+/sys/class/thermal/thermal_zone16/temp:57200
+/sys/class/thermal/thermal_zone17/temp:51900
+/sys/class/thermal/thermal_zone18/temp:65800
+/sys/class/thermal/thermal_zone19/temp:49600
+/sys/class/thermal/thermal_zone2/temp:69600
+/sys/class/thermal/thermal_zone20/temp:51600
+/sys/class/thermal/thermal_zone21/temp:53200
+/sys/class/thermal/thermal_zone22/temp:77200
+/sys/class/thermal/thermal_zone23/temp:84400
+/sys/class/thermal/thermal_zone24/temp:54900
+/sys/class/thermal/thermal_zone25/temp:75200
+/sys/class/thermal/thermal_zone26/temp:69600
+/sys/class/thermal/thermal_zone27/temp:71600
+/sys/class/thermal/thermal_zone28/temp:77200
+/sys/class/thermal/thermal_zone29/temp:78500
+/sys/class/thermal/thermal_zone3/temp:71600
+/sys/class/thermal/thermal_zone30/temp:83400
+/sys/class/thermal/thermal_zone31/temp:79100
+/sys/class/thermal/thermal_zone32/temp:82400
+/sys/class/thermal/thermal_zone33/temp:75000
+/sys/class/thermal/thermal_zone34/temp:75000
+/sys/class/thermal/thermal_zone35/temp:46244
+/sys/class/thermal/thermal_zone36/temp:37000
+/sys/class/thermal/thermal_zone37/temp:68600
+/sys/class/thermal/thermal_zone38/temp:74500
+/sys/class/thermal/thermal_zone39/temp:69600
+/sys/class/thermal/thermal_zone4/temp:77500
+/sys/class/thermal/thermal_zone40/temp:71200
+/sys/class/thermal/thermal_zone41/temp:77500
+/sys/class/thermal/thermal_zone42/temp:74500
+/sys/class/thermal/thermal_zone43/temp:75500
+/sys/class/thermal/thermal_zone44/temp:81800
+/sys/class/thermal/thermal_zone45/temp:87000
+/sys/class/thermal/thermal_zone46/temp:79800
+/sys/class/thermal/thermal_zone47/temp:84400
+/sys/class/thermal/thermal_zone48/temp:51200
+/sys/class/thermal/thermal_zone49/temp:53500
+/sys/class/thermal/thermal_zone5/temp:74500
+/sys/class/thermal/thermal_zone50/temp:68400
+/sys/class/thermal/thermal_zone51/temp:50900
+/sys/class/thermal/thermal_zone52/temp:54900
+/sys/class/thermal/thermal_zone53/temp:57200
+/sys/class/thermal/thermal_zone54/temp:51900
+/sys/class/thermal/thermal_zone55/temp:65800
+/sys/class/thermal/thermal_zone56/temp:49600
+/sys/class/thermal/thermal_zone57/temp:51600
+/sys/class/thermal/thermal_zone58/temp:41046
+/sys/class/thermal/thermal_zone59/temp:49805
+/sys/class/thermal/thermal_zone6/temp:75500
+/sys/class/thermal/thermal_zone60/temp:37760
+/sys/class/thermal/thermal_zone61/temp:10787
+/sys/class/thermal/thermal_zone62/temp:39400
+/sys/class/thermal/thermal_zone63/temp:34600
+/sys/class/thermal/thermal_zone7/temp:77800
+/sys/class/thermal/thermal_zone8/temp:80100
+/sys/class/thermal/thermal_zone9/temp:77200
+@@@current
+-160
+@@@battery
+Current Battery Service state:
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Max charging current: 0
+  Max charging voltage: 0
+  Charge counter: 2476980
+  status: 3
+  health: 2
+  present: true
+  level: 65
+  scale: 100
+  voltage: 3815
+  temperature: 346
+  technology: Li-ion
+  batteryMiscEvent: 983040
+  batteryCurrentEvent: 64
+  mSecPlugTypeSummary: 0
+  LED Charging: true
+  LED Low Battery: true
+  current now: -160
+  charge counter: 2476980
+  Adaptive Fast Charging Settings: true
+  Super Fast Charging Settings: false
+USE_FAKE_BATTERY: false
+FEATURE_WIRELESS_FAST_CHARGER_CONTROL: true
+  mWasUsedWirelessFastChargerPreviously: false
+  mWirelessFastChargingSettingsEnable: true
+LLB CAL: 20190605
+LLB MAN: 
+LLB CURRENT: YEAR2026M11D18
+LLB DIFF: 388
+FEATURE_HICCUP_CONTROL: true
+FEATURE_SUPPORTED_DAILY_BOARD: false
+SEC_FEATURE_USE_WIRELESS_POWER_SHARING: false
+BatteryInfoBackUp
+  mSavedBatteryAsoc: 83
+  mSavedBatteryMaxTemp: 647
+  mSavedBatteryMaxCurrent: 2931
+  mSavedBatteryUsage: 218090
+  FEATURE_SAVE_BATTERY_CYCLE: true
+  SEC_FEATURE_PREVENT_SWELLING: false
+
+### 1795277797050
+cpu  8156109 1792818 6780231 76214298 507067 896802 634176 0 0 0
+cpu0 1355912 283451 1616691 7713962 135683 431792 314257 0 0 0
+cpu1 1414662 297340 1332085 8082392 105142 120118 62861 0 0 0
+cpu2 1289959 259125 1174278 8566180 74837 108285 68783 0 0 0
+cpu3 1188684 234981 1064858 8955150 58929 102279 56052 0 0 0
+cpu4 868776 227237 509665 10189633 41045 66841 84747 0 0 0
+cpu5 690210 169912 434219 10711711 32509 22211 31509 0 0 0
+cpu6 734062 176591 353010 10838536 32209 23099 9457 0 0 0
+cpu7 613844 144181 295425 11156732 26709 22174 6507 0 0 0
+@@@freq
+/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu1/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu2/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu4/cpufreq/scaling_cur_freq:2803200
+/sys/devices/system/cpu/cpu5/cpufreq/scaling_cur_freq:2803200
+/sys/devices/system/cpu/cpu6/cpufreq/scaling_cur_freq:2803200
+/sys/devices/system/cpu/cpu7/cpufreq/scaling_cur_freq:2803200
+@@@thermal
+/sys/class/thermal/thermal_zone0/temp:70900
+/sys/class/thermal/thermal_zone1/temp:75500
+/sys/class/thermal/thermal_zone10/temp:80100
+/sys/class/thermal/thermal_zone11/temp:53800
+/sys/class/thermal/thermal_zone12/temp:56100
+/sys/class/thermal/thermal_zone13/temp:69400
+/sys/class/thermal/thermal_zone14/temp:52600
+/sys/class/thermal/thermal_zone15/temp:56900
+/sys/class/thermal/thermal_zone16/temp:59200
+/sys/class/thermal/thermal_zone17/temp:54200
+/sys/class/thermal/thermal_zone18/temp:66100
+/sys/class/thermal/thermal_zone19/temp:51200
+/sys/class/thermal/thermal_zone2/temp:70900
+/sys/class/thermal/thermal_zone20/temp:53500
+/sys/class/thermal/thermal_zone21/temp:55800
+/sys/class/thermal/thermal_zone22/temp:78100
+/sys/class/thermal/thermal_zone23/temp:84400
+/sys/class/thermal/thermal_zone24/temp:56900
+/sys/class/thermal/thermal_zone25/temp:75500
+/sys/class/thermal/thermal_zone26/temp:71200
+/sys/class/thermal/thermal_zone27/temp:73200
+/sys/class/thermal/thermal_zone28/temp:78100
+/sys/class/thermal/thermal_zone29/temp:85000
+/sys/class/thermal/thermal_zone3/temp:73200
+/sys/class/thermal/thermal_zone30/temp:86000
+/sys/class/thermal/thermal_zone31/temp:83700
+/sys/class/thermal/thermal_zone32/temp:84700
+/sys/class/thermal/thermal_zone33/temp:75000
+/sys/class/thermal/thermal_zone34/temp:75000
+/sys/class/thermal/thermal_zone35/temp:47675
+/sys/class/thermal/thermal_zone36/temp:37000
+/sys/class/thermal/thermal_zone37/temp:72600
+/sys/class/thermal/thermal_zone38/temp:75500
+/sys/class/thermal/thermal_zone39/temp:71200
+/sys/class/thermal/thermal_zone4/temp:78500
+/sys/class/thermal/thermal_zone40/temp:72900
+/sys/class/thermal/thermal_zone41/temp:78800
+/sys/class/thermal/thermal_zone42/temp:75800
+/sys/class/thermal/thermal_zone43/temp:75500
+/sys/class/thermal/thermal_zone44/temp:82700
+/sys/class/thermal/thermal_zone45/temp:86300
+/sys/class/thermal/thermal_zone46/temp:85400
+/sys/class/thermal/thermal_zone47/temp:85000
+/sys/class/thermal/thermal_zone48/temp:53200
+/sys/class/thermal/thermal_zone49/temp:55800
+/sys/class/thermal/thermal_zone5/temp:75800
+/sys/class/thermal/thermal_zone50/temp:70100
+/sys/class/thermal/thermal_zone51/temp:53200
+/sys/class/thermal/thermal_zone52/temp:56900
+/sys/class/thermal/thermal_zone53/temp:59500
+/sys/class/thermal/thermal_zone54/temp:54500
+/sys/class/thermal/thermal_zone55/temp:66800
+/sys/class/thermal/thermal_zone56/temp:51900
+/sys/class/thermal/thermal_zone57/temp:53900
+/sys/class/thermal/thermal_zone58/temp:41860
+/sys/class/thermal/thermal_zone59/temp:51617
+/sys/class/thermal/thermal_zone6/temp:76200
+/sys/class/thermal/thermal_zone60/temp:37812
+/sys/class/thermal/thermal_zone61/temp:10833
+/sys/class/thermal/thermal_zone62/temp:39400
+/sys/class/thermal/thermal_zone63/temp:34600
+/sys/class/thermal/thermal_zone7/temp:84100
+/sys/class/thermal/thermal_zone8/temp:80800
+/sys/class/thermal/thermal_zone9/temp:84100
+@@@current
+-160
+@@@battery
+Current Battery Service state:
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Max charging current: 0
+  Max charging voltage: 0
+  Charge counter: 2476980
+  status: 3
+  health: 2
+  present: true
+  level: 65
+  scale: 100
+  voltage: 3815
+  temperature: 346
+  technology: Li-ion
+  batteryMiscEvent: 983040
+  batteryCurrentEvent: 64
+  mSecPlugTypeSummary: 0
+  LED Charging: true
+  LED Low Battery: true
+  current now: -160
+  charge counter: 2476980
+  Adaptive Fast Charging Settings: true
+  Super Fast Charging Settings: false
+USE_FAKE_BATTERY: false
+FEATURE_WIRELESS_FAST_CHARGER_CONTROL: true
+  mWasUsedWirelessFastChargerPreviously: false
+  mWirelessFastChargingSettingsEnable: true
+LLB CAL: 20190605
+LLB MAN: 
+LLB CURRENT: YEAR2026M11D18
+LLB DIFF: 388
+FEATURE_HICCUP_CONTROL: true
+FEATURE_SUPPORTED_DAILY_BOARD: false
+SEC_FEATURE_USE_WIRELESS_POWER_SHARING: false
+BatteryInfoBackUp
+  mSavedBatteryAsoc: 83
+  mSavedBatteryMaxTemp: 647
+  mSavedBatteryMaxCurrent: 2931
+  mSavedBatteryUsage: 218090
+  FEATURE_SAVE_BATTERY_CYCLE: true
+  SEC_FEATURE_PREVENT_SWELLING: false
+
+### 1795277798097
+cpu  8156502 1792819 6780359 76214432 507068 896818 634180 0 0 0
+cpu0 1355938 283451 1616714 7713983 135683 431800 314260 0 0 0
+cpu1 1414696 297341 1332113 8082414 105142 120119 62861 0 0 0
+cpu2 1289994 259125 1174298 8566206 74837 108286 68783 0 0 0
+cpu3 1188717 234981 1064880 8955179 58930 102280 56052 0 0 0
+cpu4 868838 227237 509677 10189641 41045 66842 84747 0 0 0
+cpu5 690277 169912 434229 10711719 32509 22212 31510 0 0 0
+cpu6 734139 176591 353014 10838544 32209 23100 9457 0 0 0
+cpu7 613903 144181 295434 11156743 26709 22175 6507 0 0 0
+@@@freq
+/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu1/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu2/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu4/cpufreq/scaling_cur_freq:2803200
+/sys/devices/system/cpu/cpu5/cpufreq/scaling_cur_freq:2803200
+/sys/devices/system/cpu/cpu6/cpufreq/scaling_cur_freq:2803200
+/sys/devices/system/cpu/cpu7/cpufreq/scaling_cur_freq:2803200
+@@@thermal
+/sys/class/thermal/thermal_zone0/temp:72200
+/sys/class/thermal/thermal_zone1/temp:76200
+/sys/class/thermal/thermal_zone10/temp:78500
+/sys/class/thermal/thermal_zone11/temp:55100
+/sys/class/thermal/thermal_zone12/temp:57100
+/sys/class/thermal/thermal_zone13/temp:70100
+/sys/class/thermal/thermal_zone14/temp:54200
+/sys/class/thermal/thermal_zone15/temp:57500
+/sys/class/thermal/thermal_zone16/temp:60800
+/sys/class/thermal/thermal_zone17/temp:55900
+/sys/class/thermal/thermal_zone18/temp:69800
+/sys/class/thermal/thermal_zone19/temp:53200
+/sys/class/thermal/thermal_zone2/temp:71200
+/sys/class/thermal/thermal_zone20/temp:54900
+/sys/class/thermal/thermal_zone21/temp:57100
+/sys/class/thermal/thermal_zone22/temp:79100
+/sys/class/thermal/thermal_zone23/temp:86700
+/sys/class/thermal/thermal_zone24/temp:57500
+/sys/class/thermal/thermal_zone25/temp:76500
+/sys/class/thermal/thermal_zone26/temp:71200
+/sys/class/thermal/thermal_zone27/temp:73500
+/sys/class/thermal/thermal_zone28/temp:79100
+/sys/class/thermal/thermal_zone29/temp:82100
+/sys/class/thermal/thermal_zone3/temp:73500
+/sys/class/thermal/thermal_zone30/temp:87000
+/sys/class/thermal/thermal_zone31/temp:84400
+/sys/class/thermal/thermal_zone32/temp:78800
+/sys/class/thermal/thermal_zone33/temp:75000
+/sys/class/thermal/thermal_zone34/temp:75000
+/sys/class/thermal/thermal_zone35/temp:48762
+/sys/class/thermal/thermal_zone36/temp:37000
+/sys/class/thermal/thermal_zone37/temp:72900
+/sys/class/thermal/thermal_zone38/temp:76500
+/sys/class/thermal/thermal_zone39/temp:71200
+/sys/class/thermal/thermal_zone4/temp:79500
+/sys/class/thermal/thermal_zone40/temp:73200
+/sys/class/thermal/thermal_zone41/temp:79500
+/sys/class/thermal/thermal_zone42/temp:76800
+/sys/class/thermal/thermal_zone43/temp:76500
+/sys/class/thermal/thermal_zone44/temp:84400
+/sys/class/thermal/thermal_zone45/temp:87300
+/sys/class/thermal/thermal_zone46/temp:85400
+/sys/class/thermal/thermal_zone47/temp:82400
+/sys/class/thermal/thermal_zone48/temp:54800
+/sys/class/thermal/thermal_zone49/temp:57100
+/sys/class/thermal/thermal_zone5/temp:76500
+/sys/class/thermal/thermal_zone50/temp:70100
+/sys/class/thermal/thermal_zone51/temp:54200
+/sys/class/thermal/thermal_zone52/temp:57500
+/sys/class/thermal/thermal_zone53/temp:60800
+/sys/class/thermal/thermal_zone54/temp:55900
+/sys/class/thermal/thermal_zone55/temp:69800
+/sys/class/thermal/thermal_zone56/temp:53200
+/sys/class/thermal/thermal_zone57/temp:54900
+/sys/class/thermal/thermal_zone58/temp:42558
+/sys/class/thermal/thermal_zone59/temp:52720
+/sys/class/thermal/thermal_zone6/temp:76500
+/sys/class/thermal/thermal_zone60/temp:37864
+/sys/class/thermal/thermal_zone61/temp:10833
+/sys/class/thermal/thermal_zone62/temp:39400
+/sys/class/thermal/thermal_zone63/temp:34600
+/sys/class/thermal/thermal_zone7/temp:82400
+/sys/class/thermal/thermal_zone8/temp:79800
+/sys/class/thermal/thermal_zone9/temp:84100
+@@@current
+-160
+@@@battery
+Current Battery Service state:
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Max charging current: 0
+  Max charging voltage: 0
+  Charge counter: 2476980
+  status: 3
+  health: 2
+  present: true
+  level: 65
+  scale: 100
+  voltage: 3815
+  temperature: 346
+  technology: Li-ion
+  batteryMiscEvent: 983040
+  batteryCurrentEvent: 64
+  mSecPlugTypeSummary: 0
+  LED Charging: true
+  LED Low Battery: true
+  current now: -160
+  charge counter: 2476980
+  Adaptive Fast Charging Settings: true
+  Super Fast Charging Settings: false
+USE_FAKE_BATTERY: false
+FEATURE_WIRELESS_FAST_CHARGER_CONTROL: true
+  mWasUsedWirelessFastChargerPreviously: false
+  mWirelessFastChargingSettingsEnable: true
+LLB CAL: 20190605
+LLB MAN: 
+LLB CURRENT: YEAR2026M11D18
+LLB DIFF: 388
+FEATURE_HICCUP_CONTROL: true
+FEATURE_SUPPORTED_DAILY_BOARD: false
+SEC_FEATURE_USE_WIRELESS_POWER_SHARING: false
+BatteryInfoBackUp
+  mSavedBatteryAsoc: 83
+  mSavedBatteryMaxTemp: 647
+  mSavedBatteryMaxCurrent: 2931
+  mSavedBatteryUsage: 218090
+  FEATURE_SAVE_BATTERY_CYCLE: true
+  SEC_FEATURE_PREVENT_SWELLING: false
+
+### 1795277799077
+cpu  8156850 1792821 6780512 76214830 507072 896837 634187 0 0 0
+cpu0 1355965 283451 1616738 7714030 135684 431809 314264 0 0 0
+cpu1 1414720 297342 1332139 8082466 105144 120121 62862 0 0 0
+cpu2 1290025 259125 1174322 8566265 74837 108288 68783 0 0 0
+cpu3 1188744 234982 1064901 8955245 58930 102282 56052 0 0 0
+cpu4 868900 227237 509694 10189679 41046 66843 84747 0 0 0
+cpu5 690338 169912 434249 10711756 32509 22213 31510 0 0 0
+cpu6 734197 176591 353022 10838594 32210 23101 9458 0 0 0
+cpu7 613961 144181 295447 11156791 26710 22176 6507 0 0 0
+@@@freq
+/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu1/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu2/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq:1766400
+/sys/devices/system/cpu/cpu4/cpufreq/scaling_cur_freq:2476800
+/sys/devices/system/cpu/cpu5/cpufreq/scaling_cur_freq:2476800
+/sys/devices/system/cpu/cpu6/cpufreq/scaling_cur_freq:2476800
+/sys/devices/system/cpu/cpu7/cpufreq/scaling_cur_freq:2476800
+@@@thermal
+/sys/class/thermal/thermal_zone0/temp:59100
+/sys/class/thermal/thermal_zone1/temp:67000
+/sys/class/thermal/thermal_zone10/temp:61100
+/sys/class/thermal/thermal_zone11/temp:52500
+/sys/class/thermal/thermal_zone12/temp:55100
+/sys/class/thermal/thermal_zone13/temp:59200
+/sys/class/thermal/thermal_zone14/temp:52900
+/sys/class/thermal/thermal_zone15/temp:55500
+/sys/class/thermal/thermal_zone16/temp:57900
+/sys/class/thermal/thermal_zone17/temp:55200
+/sys/class/thermal/thermal_zone18/temp:61200
+/sys/class/thermal/thermal_zone19/temp:51200
+/sys/class/thermal/thermal_zone2/temp:65700
+/sys/class/thermal/thermal_zone20/temp:54500
+/sys/class/thermal/thermal_zone21/temp:55500
+/sys/class/thermal/thermal_zone22/temp:67300
+/sys/class/thermal/thermal_zone23/temp:69600
+/sys/class/thermal/thermal_zone24/temp:55500
+/sys/class/thermal/thermal_zone25/temp:67000
+/sys/class/thermal/thermal_zone26/temp:65700
+/sys/class/thermal/thermal_zone27/temp:64300
+/sys/class/thermal/thermal_zone28/temp:65300
+/sys/class/thermal/thermal_zone29/temp:69600
+/sys/class/thermal/thermal_zone3/temp:64300
+/sys/class/thermal/thermal_zone30/temp:62400
+/sys/class/thermal/thermal_zone31/temp:60700
+/sys/class/thermal/thermal_zone32/temp:61100
+/sys/class/thermal/thermal_zone33/temp:75000
+/sys/class/thermal/thermal_zone34/temp:75000
+/sys/class/thermal/thermal_zone35/temp:48762
+/sys/class/thermal/thermal_zone36/temp:37000
+/sys/class/thermal/thermal_zone37/temp:59400
+/sys/class/thermal/thermal_zone38/temp:66600
+/sys/class/thermal/thermal_zone39/temp:65300
+/sys/class/thermal/thermal_zone4/temp:65300
+/sys/class/thermal/thermal_zone40/temp:64000
+/sys/class/thermal/thermal_zone41/temp:65300
+/sys/class/thermal/thermal_zone42/temp:67300
+/sys/class/thermal/thermal_zone43/temp:67600
+/sys/class/thermal/thermal_zone44/temp:67300
+/sys/class/thermal/thermal_zone45/temp:62700
+/sys/class/thermal/thermal_zone46/temp:60100
+/sys/class/thermal/thermal_zone47/temp:61100
+/sys/class/thermal/thermal_zone48/temp:52200
+/sys/class/thermal/thermal_zone49/temp:55500
+/sys/class/thermal/thermal_zone5/temp:67300
+/sys/class/thermal/thermal_zone50/temp:59200
+/sys/class/thermal/thermal_zone51/temp:53200
+/sys/class/thermal/thermal_zone52/temp:55200
+/sys/class/thermal/thermal_zone53/temp:57900
+/sys/class/thermal/thermal_zone54/temp:54900
+/sys/class/thermal/thermal_zone55/temp:61200
+/sys/class/thermal/thermal_zone56/temp:51200
+/sys/class/thermal/thermal_zone57/temp:53900
+/sys/class/thermal/thermal_zone58/temp:43546
+/sys/class/thermal/thermal_zone59/temp:53308
+/sys/class/thermal/thermal_zone6/temp:67600
+/sys/class/thermal/thermal_zone60/temp:37968
+/sys/class/thermal/thermal_zone61/temp:10833
+/sys/class/thermal/thermal_zone62/temp:39400
+/sys/class/thermal/thermal_zone63/temp:34600
+/sys/class/thermal/thermal_zone7/temp:67000
+/sys/class/thermal/thermal_zone8/temp:65700
+/sys/class/thermal/thermal_zone9/temp:60400
+@@@current
+-160
+@@@battery
+Current Battery Service state:
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Max charging current: 0
+  Max charging voltage: 0
+  Charge counter: 2476980
+  status: 3
+  health: 2
+  present: true
+  level: 65
+  scale: 100
+  voltage: 3815
+  temperature: 346
+  technology: Li-ion
+  batteryMiscEvent: 983040
+  batteryCurrentEvent: 64
+  mSecPlugTypeSummary: 0
+  LED Charging: true
+  LED Low Battery: true
+  current now: -160
+  charge counter: 2476980
+  Adaptive Fast Charging Settings: true
+  Super Fast Charging Settings: false
+USE_FAKE_BATTERY: false
+FEATURE_WIRELESS_FAST_CHARGER_CONTROL: true
+  mWasUsedWirelessFastChargerPreviously: false
+  mWirelessFastChargingSettingsEnable: true
+LLB CAL: 20190605
+LLB MAN: 
+LLB CURRENT: YEAR2026M11D18
+LLB DIFF: 388
+FEATURE_HICCUP_CONTROL: true
+FEATURE_SUPPORTED_DAILY_BOARD: false
+SEC_FEATURE_USE_WIRELESS_POWER_SHARING: false
+BatteryInfoBackUp
+  mSavedBatteryAsoc: 83
+  mSavedBatteryMaxTemp: 647
+  mSavedBatteryMaxCurrent: 2931
+  mSavedBatteryUsage: 218090
+  FEATURE_SAVE_BATTERY_CYCLE: true
+  SEC_FEATURE_PREVENT_SWELLING: false
+
+### 1795277800060
+cpu  8156944 1792822 6780614 76215302 507077 896847 634194 0 0 0
+cpu0 1355976 283451 1616752 7714070 135685 431814 314268 0 0 0
+cpu1 1414735 297342 1332156 8082516 105145 120123 62862 0 0 0
+cpu2 1290044 259125 1174345 8566310 74838 108289 68784 0 0 0
+cpu3 1188755 234982 1064923 8955296 58930 102283 56053 0 0 0
+cpu4 868906 227238 509700 10189752 41046 66844 84747 0 0 0
+cpu5 690345 169912 434252 10711833 32509 22213 31511 0 0 0
+cpu6 734209 176591 353031 10838658 32210 23101 9458 0 0 0
+cpu7 613974 144181 295455 11156862 26710 22177 6507 0 0 0
+@@@freq
+/sys/devices/system/cpu/cpu0/cpufreq/scaling_cur_freq:1612800
+/sys/devices/system/cpu/cpu1/cpufreq/scaling_cur_freq:1612800
+/sys/devices/system/cpu/cpu2/cpufreq/scaling_cur_freq:1612800
+/sys/devices/system/cpu/cpu3/cpufreq/scaling_cur_freq:1612800
+/sys/devices/system/cpu/cpu4/cpufreq/scaling_cur_freq:825600
+/sys/devices/system/cpu/cpu5/cpufreq/scaling_cur_freq:825600
+/sys/devices/system/cpu/cpu6/cpufreq/scaling_cur_freq:825600
+/sys/devices/system/cpu/cpu7/cpufreq/scaling_cur_freq:825600
+@@@thermal
+/sys/class/thermal/thermal_zone0/temp:53800
+/sys/class/thermal/thermal_zone1/temp:55800
+/sys/class/thermal/thermal_zone10/temp:54800
+/sys/class/thermal/thermal_zone11/temp:50500
+/sys/class/thermal/thermal_zone12/temp:52200
+/sys/class/thermal/thermal_zone13/temp:54200
+/sys/class/thermal/thermal_zone14/temp:50600
+/sys/class/thermal/thermal_zone15/temp:51900
+/sys/class/thermal/thermal_zone16/temp:53500
+/sys/class/thermal/thermal_zone17/temp:52200
+/sys/class/thermal/thermal_zone18/temp:55200
+/sys/class/thermal/thermal_zone19/temp:49600
+/sys/class/thermal/thermal_zone2/temp:55800
+/sys/class/thermal/thermal_zone20/temp:51600
+/sys/class/thermal/thermal_zone21/temp:52500
+/sys/class/thermal/thermal_zone22/temp:56800
+/sys/class/thermal/thermal_zone23/temp:55100
+/sys/class/thermal/thermal_zone24/temp:51900
+/sys/class/thermal/thermal_zone25/temp:55800
+/sys/class/thermal/thermal_zone26/temp:55800
+/sys/class/thermal/thermal_zone27/temp:56800
+/sys/class/thermal/thermal_zone28/temp:56100
+/sys/class/thermal/thermal_zone29/temp:54800
+/sys/class/thermal/thermal_zone3/temp:56800
+/sys/class/thermal/thermal_zone30/temp:54500
+/sys/class/thermal/thermal_zone31/temp:54500
+/sys/class/thermal/thermal_zone32/temp:54800
+/sys/class/thermal/thermal_zone33/temp:75000
+/sys/class/thermal/thermal_zone34/temp:75000
+/sys/class/thermal/thermal_zone35/temp:47903
+/sys/class/thermal/thermal_zone36/temp:37000
+/sys/class/thermal/thermal_zone37/temp:54200
+/sys/class/thermal/thermal_zone38/temp:55800
+/sys/class/thermal/thermal_zone39/temp:55800
+/sys/class/thermal/thermal_zone4/temp:56100
+/sys/class/thermal/thermal_zone40/temp:56500
+/sys/class/thermal/thermal_zone41/temp:56100
+/sys/class/thermal/thermal_zone42/temp:57100
+/sys/class/thermal/thermal_zone43/temp:56100
+/sys/class/thermal/thermal_zone44/temp:55100
+/sys/class/thermal/thermal_zone45/temp:54500
+/sys/class/thermal/thermal_zone46/temp:54200
+/sys/class/thermal/thermal_zone47/temp:54800
+/sys/class/thermal/thermal_zone48/temp:50500
+/sys/class/thermal/thermal_zone49/temp:52200
+/sys/class/thermal/thermal_zone5/temp:57100
+/sys/class/thermal/thermal_zone50/temp:54200
+/sys/class/thermal/thermal_zone51/temp:50600
+/sys/class/thermal/thermal_zone52/temp:51900
+/sys/class/thermal/thermal_zone53/temp:53500
+/sys/class/thermal/thermal_zone54/temp:52200
+/sys/class/thermal/thermal_zone55/temp:55200
+/sys/class/thermal/thermal_zone56/temp:49600
+/sys/class/thermal/thermal_zone57/temp:51600
+/sys/class/thermal/thermal_zone58/temp:44127
+/sys/class/thermal/thermal_zone59/temp:51397
+/sys/class/thermal/thermal_zone6/temp:56500
+/sys/class/thermal/thermal_zone60/temp:38072
+/sys/class/thermal/thermal_zone61/temp:10787
+/sys/class/thermal/thermal_zone62/temp:39400
+/sys/class/thermal/thermal_zone63/temp:34600
+/sys/class/thermal/thermal_zone7/temp:55100
+/sys/class/thermal/thermal_zone8/temp:54500
+/sys/class/thermal/thermal_zone9/temp:54200
+@@@current
+-160
+@@@battery
+Current Battery Service state:
+  AC powered: false
+  USB powered: false
+  Wireless powered: false
+  Max charging current: 0
+  Max charging voltage: 0
+  Charge counter: 2476980
+  status: 3
+  health: 2
+  present: true
+  level: 65
+  scale: 100
+  voltage: 3815
+  temperature: 346
+  technology: Li-ion
+  batteryMiscEvent: 983040
+  batteryCurrentEvent: 64
+  mSecPlugTypeSummary: 0
+  LED Charging: true
+  LED Low Battery: true
+  current now: -160
+  charge counter: 2476980
+  Adaptive Fast Charging Settings: true
+  Super Fast Charging Settings: false
+USE_FAKE_BATTERY: false
+FEATURE_WIRELESS_FAST_CHARGER_CONTROL: true
+  mWasUsedWirelessFastChargerPreviously: false
+  mWirelessFastChargingSettingsEnable: true
+LLB CAL: 20190605
+LLB MAN: 
+LLB CURRENT: YEAR2026M11D18
+LLB DIFF: 388
+FEATURE_HICCUP_CONTROL: true
+FEATURE_SUPPORTED_DAILY_BOARD: false
+SEC_FEATURE_USE_WIRELESS_POWER_SHARING: false
+BatteryInfoBackUp
+  mSavedBatteryAsoc: 83
+  mSavedBatteryMaxTemp: 647
+  mSavedBatteryMaxCurrent: 2931
+  mSavedBatteryUsage: 218090
+  FEATURE_SAVE_BATTERY_CYCLE: true
+  SEC_FEATURE_PREVENT_SWELLING: false
+
