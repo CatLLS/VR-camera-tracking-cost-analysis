@@ -1,7 +1,7 @@
 # Análise — gráficos e tabelas
 
 Tudo aqui é gerado por `gerar_graficos.py` a partir dos dados medidos em `dados/`
-(Galaxy Note 9, medições da Cat em 21/11 e 24/11/2026). O script não altera nada em `dados/`.
+(Galaxy Note 9, medições da Cat em 21, 24 e 25/11/2026). O script não altera nada em `dados/`.
 
 Para gerar de novo (por exemplo, depois que entrarem as execuções de 15 min):
 
@@ -9,6 +9,12 @@ Para gerar de novo (por exemplo, depois que entrarem as execuções de 15 min):
 pip install matplotlib numpy
 python analise/gerar_graficos.py
 ```
+
+## Gráfico do grupo
+
+`GRUPO_custo_do_arcore.png`: custo do ARCore em % de cada frente, (com AR − sem AR) / sem AR × 100, por
+número de threads. Linha = médias das 5 repetições; pontos = cada repetição; barra = menor a maior valor.
+Números em `tabelas/grupo_custo_pct.csv`.
 
 ## Gráficos por frente
 
@@ -23,7 +29,9 @@ python analise/gerar_graficos.py
 | | `F2_3_custo_ar_cpu.png` | CPU(AR) − CPU(sem AR), em pontos percentuais |
 | | `F2_4_vazao_threads_do_jogo.png` | Quanto trabalho cada thread extra do jogo conseguiu fazer |
 | | `F2_5_frequencia_cpu.png` | Frequência média dos núcleos |
-| 3 — degradação em 15 min | `F3_*.png` | **Ainda não gerado**: depende das 4 execuções de 15 min |
+| 3 — degradação em 15 min | `F3_3_frente3_principal.png` | p95, frequência dos Gold e temperatura da bateria minuto a minuto, 0 x 6 threads |
+| | `F3_1_p95_ao_longo_do_tempo.png` | p95 em janelas de 30 s, cada repetição |
+| | `F3_2_temperatura_e_frequencia.png` | Temperatura da bateria e dos Gold e frequência dos Gold, média de cada minuto |
 | 4 — bateria | `F4_1_corrente_bateria.png` | Corrente média de descarga (mA) |
 | | `F4_2_custo_ar_bateria.png` | Corrente(AR) − corrente(sem AR) |
 | | `F4_3_potencia.png` | Potência média = corrente × tensão da bateria (mW) |
@@ -37,6 +45,13 @@ par sem AR / com AR foi medido um logo depois do outro) e depois tirada a média
 - `execucoes.csv`: uma linha por execução usada (40), com os números da página e do coletor.
 - `resumo_por_condicao.csv`: média, desvio padrão e n de cada métrica, para as 8 condições.
 - `custo_do_ar.csv`: média, desvio padrão e n do custo do AR em cada métrica, por nº de threads.
+- `frente3_minuto1_x_minuto15.csv`: para cada execução de 15 min, p95, temperaturas, frequências, CPU e
+  corrente no 1º e no 15º minuto.
+- `frente3_por_minuto.csv` e `frente3_p95_janelas_30s.csv`: as séries da frente 3.
+
+Na frente 3, o minuto k do coletor vai de 5 s + 60(k−1) a 5 s + 60k depois do início do coletor (os 5 s
+aproximam o tempo entre iniciar o coletor e tocar em *Iniciar*); o p95 do minuto k usa os quadros da
+página nesse minuto (o 1º minuto começa depois dos 5 s de aquecimento).
 
 ## Como as execuções foram escolhidas
 

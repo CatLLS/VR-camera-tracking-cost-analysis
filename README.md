@@ -1,3 +1,11 @@
+# Custo do rastreamento do ARCore — Projeto 2, SO 2026.2
+
+- **Relatório:** [RELATORIO.md](RELATORIO.md)
+- **Dados brutos:** [`dados/`](dados/) · **análise, tabelas e gráficos:** [`analise/`](analise/)
+- **Página de medição:** [`docs/`](docs/) · **coletor adb e scripts:** [`tools/`](tools/) · **protocolo:** [`TestGuide.md`](TestGuide.md), [`PROTOCOLO.md`](PROTOCOLO.md)
+
+---
+
 Group: Cat(me), Thomas, Sarms, Caue
 
 Later I'll do a better readme, here's the overview:

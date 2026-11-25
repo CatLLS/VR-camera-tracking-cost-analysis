@@ -1,2 +1,2 @@
-35.4
-# medido em 2026-11-25T08:59:26, bateria 83%
+33.9
+# medido em 2026-11-25T09:34:30, bateria 70%

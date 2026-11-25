@@ -35,6 +35,10 @@ GRAF = os.path.join(SAIDA, "graficos")
 TAB = os.path.join(SAIDA, "tabelas")
 
 THREADS = [0, 2, 4, 6]
+TITULO_GRUPO = ("Ligar o ARCore sempre custa caro, mas o custo relativo diminui\n"
+                "quando o jogo já ocupa mais threads")
+TITULO_F3 = ("Com 6 threads, o clock dos núcleos Gold chega ao teto de ~1460 MHz em 4 min\n"
+             "e o p95 sobe até ficar parecido com o de 0 threads")
 MODOS = ["sem-ar", "ar"]
 NOME_MODO = {"sem-ar": "Sem AR (só a cena)", "ar": "Com AR (ARCore)"}
 COR = {"sem-ar": "#4C72B0", "ar": "#DD8452"}
@@ -166,6 +170,12 @@ def janela_coletor(r):
     return c["inicio"] + a * 1000, c["inicio"] + b * 1000, "janela_fixa"
 
 
+def p95(valores):
+    """Percentil 95 pelo posto mais próximo, igual ao da página."""
+    v = np.sort(np.asarray(valores, dtype=float))
+    return float(v[min(len(v) - 1, int(np.ceil(0.95 * len(v))) - 1)]) if len(v) else float("nan")
+
+
 def media_janela(c, metrica, chave, ini, fim):
     v = [x for t, x in c["serie"].get((metrica, chave), []) if ini <= t <= fim and np.isfinite(x)]
     return float(np.mean(v)) if v else float("nan")
@@ -293,6 +303,20 @@ def tabela_custo(linhas):
 
 def rodape(fig, texto):
     fig.text(0.01, -0.01, texto, fontsize=7, color="#666", ha="left", va="top", wrap=True)
+
+
+def rotulos_finais(ax, itens, folga):
+    """Escreve o nome de cada série ao lado do último ponto, afastando os que ficariam sobrepostos.
+
+    itens = [(texto, x, y, cor)]; folga = distância mínima entre rótulos, nas unidades do eixo y.
+    """
+    itens = sorted(itens, key=lambda i: i[2])
+    ys = [i[2] for i in itens]
+    for k in range(1, len(ys)):
+        ys[k] = max(ys[k], ys[k - 1] + folga)
+    for (texto, x, _, cor), y in zip(itens, ys):
+        ax.annotate(texto, (x, y), xytext=(12, 0), textcoords="offset points", va="center",
+                    fontsize=12, color=cor, fontweight="bold", annotation_clip=False)
 
 
 def salvar(fig, nome):
@@ -457,6 +481,61 @@ def grafico_freq(linhas):
 
 
 # ---------------------------------------------------------------------------
+# Gráfico do grupo (Ficha 4)
+
+def grafico_grupo(linhas):
+    """Custo do ARCore em % de cada frente: (com AR − sem AR) / sem AR × 100, por nº de threads."""
+    frentes = [("descarga_ma", "Bateria (corrente)", "#55A868"),
+               ("cpu_total_pct", "CPU (uso total)", "#8172B2"),
+               ("frame_p95_ms", "p95 do tempo de quadro", "#C44E52")]
+    fig, ax = plt.subplots(figsize=(9, 5.8))
+    tab = []
+    finais = []
+    for campo, nome, cor in frentes:
+        medias, mins, maxs = [], [], []
+        for t in THREADS:
+            sem = np.mean(valores(linhas, "sem-ar", t, campo))
+            com = np.mean(valores(linhas, "ar", t, campo))
+            por_rep = []
+            for rep in sorted({int(num(l["rep"])) for l in linhas}):
+                a = [num(l[campo]) for l in linhas if l["mode"] == "ar" and int(num(l["threads"])) == t and int(num(l["rep"])) == rep]
+                b = [num(l[campo]) for l in linhas if l["mode"] == "sem-ar" and int(num(l["threads"])) == t and int(num(l["rep"])) == rep]
+                if a and b and np.isfinite(a[0]) and np.isfinite(b[0]):
+                    por_rep.append(100 * (a[0] - b[0]) / b[0])
+            m = 100 * (com - sem) / sem
+            medias.append(m)
+            mins.append(min(por_rep))
+            maxs.append(max(por_rep))
+            ax.scatter([t] * len(por_rep), por_rep, s=14, color=cor, alpha=0.35, zorder=2)
+            tab.append({"frente": nome, "metrica": campo, "threads": t, "sem_ar_media": sem, "com_ar_media": com,
+                        "custo_pct_das_medias": m, "custo_pct_min_rep": min(por_rep),
+                        "custo_pct_max_rep": max(por_rep), "n_pares": len(por_rep),
+                        "custo_pct_por_rep": " ".join(f"{x:.1f}" for x in por_rep)})
+        ax.errorbar(THREADS, medias, yerr=[np.array(medias) - mins, np.array(maxs) - medias],
+                    fmt="o-", color=cor, lw=2.5, ms=8, capsize=5, zorder=3)
+        abaixo = campo == "frame_p95_ms"
+        for t, m in zip(THREADS, medias):
+            ax.annotate(f"{m:.0f}%", (t, m), xytext=(-8, -16 if abaixo else 8), textcoords="offset points",
+                        ha="right", fontsize=10, color=cor, fontweight="bold")
+        finais.append((nome, THREADS[-1], medias[-1], cor))
+    rotulos_finais(ax, finais, 22)
+    ax.axhline(0, color="black", lw=1.2)
+    ax.text(0, 6, "0% = sem AR (mesma cena e mesmas threads, sem o ARCore)", fontsize=10, color="#333")
+    ax.set_xticks(THREADS)
+    ax.set_xlim(-0.6, 8.6)
+    ax.set_ylim(bottom=-15)
+    ax.set_xlabel("Threads extras ocupadas pelo jogo", fontsize=12)
+    ax.set_ylabel("Custo do ARCore: aumento em relação ao sem AR (%)", fontsize=12)
+    ax.tick_params(labelsize=11)
+    ax.grid(axis="y", alpha=0.3)
+    ax.set_title(TITULO_GRUPO, fontsize=13)
+    rodape(fig, "Linha = custo calculado com as médias de 5 repetições; pontos claros = custo em cada repetição "
+                "(par sem AR / com AR medido em seguida); barra = do menor ao maior valor. Galaxy Note 9.")
+    salvar(fig, "GRUPO_custo_do_arcore.png")
+    gravar("grupo_custo_pct.csv", tab)
+
+
+# ---------------------------------------------------------------------------
 # Frente 3 (execuções de 15 min)
 
 def frente3(escolhidas):
@@ -484,12 +563,11 @@ def frente3(escolhidas):
         bordas = np.arange(num(r["warmup_s"]), t.max() + 30, 30)
         xs, ys = [], []
         for a, b in zip(bordas[:-1], bordas[1:]):
-            sel = np.sort(f[(t >= a) & (t < b)])
+            sel = f[(t >= a) & (t < b)]
             if len(sel):
-                p95 = sel[min(len(sel) - 1, int(np.ceil(0.95 * len(sel))) - 1)]
                 xs.append((a + b) / 2 / 60)
-                ys.append(p95)
-                linhas_tab.append({"condicao": cond, "rep": rep, "minuto_meio": (a + b) / 2 / 60, "p95_ms": p95})
+                ys.append(p95(sel))
+                linhas_tab.append({"condicao": cond, "rep": rep, "minuto_meio": (a + b) / 2 / 60, "p95_ms": ys[-1]})
         ax.plot(xs, ys, estilos.get(rep, "-"), color=cores.get(cond, "gray"), label=f"{cond} rep {rep}")
     ax.set_xlabel("Minutos desde o início")
     ax.set_ylabel("p95 do tempo de quadro em janelas de 30 s (ms)")
@@ -499,43 +577,131 @@ def frente3(escolhidas):
     salvar(fig, "F3_1_p95_ao_longo_do_tempo.png")
     gravar("frente3_p95_janelas_30s.csv", linhas_tab)
 
-    # Temperatura e frequência
-    fig, axs = plt.subplots(1, 3, figsize=(15, 4.3))
+    # Por minuto: temperatura e frequência (média de cada minuto)
+    def por_minuto_coletor(c, metrica, filtro):
+        """Média de cada minuto. Minuto k = [início do coletor + 5 s + 60(k-1), +60 s]."""
+        out = []
+        for k in range(1, 16):
+            ini = c["inicio"] + 5000 + 60000 * (k - 1)
+            v = [x for (m, kk), pts in c["serie"].items() if m == metrica and filtro(kk)
+                 for tt, x in pts if ini <= tt < ini + 60000 and np.isfinite(x)]
+            out.append(float(np.mean(v)) if v else float("nan"))
+        return np.array(out)
+
+    def p95_por_minuto(r):
+        q = quadros.get(r["run_id"], [])
+        t = np.array([a for a, _ in q]) / 1000.0
+        f = np.array([b for _, b in q])
+        aq = num(r["warmup_s"])
+        return np.array([p95(f[(t >= max(aq, 60 * (k - 1))) & (t < 60 * k)]) for k in range(1, 16)])
+
+    minutos = np.arange(1, 16)
+    metr = {"p95": ("p95 do tempo de quadro (ms)", None),
+            "freq_gold": ("Frequência média dos núcleos Gold (MHz)", ("cpu_freq_mhz", lambda k: k in GOLD)),
+            "temp_gold": ("Temperatura dos núcleos Gold (°C)", ("temp_c", lambda k: "gold" in k)),
+            "temp_bateria": ("Temperatura da bateria (°C)", ("bateria", lambda k: k == "temperature_c"))}
+    series = defaultdict(dict)  # cond -> metrica -> [array por repetição]
     linhas_tab = []
     for cond, rep, r in longas:
-        c = r["coletor"]
-        if c is None:
+        if r["coletor"] is None:
             continue
-        t0 = c["inicio"]
-        def serie(metrica, filtro):
-            por_t = defaultdict(list)
-            for (m, k), pts in c["serie"].items():
-                if m == metrica and filtro(k):
-                    for t, v in pts:
-                        por_t[t].append(v)
-            ts = sorted(por_t)
-            return np.array([(t - t0) / 60000 for t in ts]), np.array([np.mean(por_t[t]) for t in ts])
-        series = {"temp_bateria_c": serie("bateria", lambda k: k == "temperature_c"),
-                  "temp_cpu_gold_c": serie("temp_c", lambda k: "gold" in k),
-                  "freq_gold_mhz": serie("cpu_freq_mhz", lambda k: k in GOLD)}
-        for ax, (nome, (x, y)) in zip(axs, series.items()):
-            ax.plot(x, y, estilos.get(rep, "-"), color=cores.get(cond, "gray"), label=f"{cond} rep {rep}")
-        x, _ = series["temp_bateria_c"]
-        for i in range(len(x)):
-            linhas_tab.append({"condicao": cond, "rep": rep, "minuto": x[i],
-                               **{k: (series[k][1][i] if i < len(series[k][1]) else "") for k in series}})
-    for ax, (titulo, ylabel) in zip(axs, (("Temperatura da bateria", "°C"),
-                                          ("Temperatura dos núcleos Gold (média dos sensores)", "°C"),
-                                          ("Frequência dos núcleos Gold", "MHz"))):
-        ax.set_title(titulo)
-        ax.set_xlabel("Minutos desde o início do coletor")
-        ax.set_ylabel(ylabel)
+        vals = {"p95": p95_por_minuto(r)}
+        for nome, (_, fonte) in metr.items():
+            if fonte:
+                vals[nome] = por_minuto_coletor(r["coletor"], *fonte)
+        for nome, v in vals.items():
+            series[cond].setdefault(nome, []).append(v)
+        for i, k in enumerate(minutos):
+            linhas_tab.append({"condicao": cond, "rep": rep, "minuto": int(k),
+                               **{f"{n}": vals[n][i] for n in vals}})
+    gravar("frente3_por_minuto.csv", linhas_tab)
+
+    fig, axs = plt.subplots(1, 3, figsize=(15, 4.3))
+    for ax, nome in zip(axs, ("temp_bateria", "temp_gold", "freq_gold")):
+        for cond, rep, r in longas:
+            i = [x[1] for x in longas if x[0] == cond].index(rep)
+            ax.plot(minutos, series[cond][nome][i], "o" + estilos.get(rep, "-"), ms=3,
+                    color=cores.get(cond, "gray"), label=f"{cond} rep {rep}")
+        ax.set_title(metr[nome][0])
+        ax.set_xlabel("Minuto da execução")
+        ax.set_xticks([1, 5, 10, 15])
         ax.grid(alpha=0.3)
         ax.legend(fontsize=8)
-    fig.suptitle("Frente 3 — Aquecimento e redução de clock em 15 minutos")
-    rodape(fig, "O coletor começa até ~10 s antes da página.")
+    fig.suptitle("Frente 3 — Aquecimento e frequência da CPU minuto a minuto (15 min com AR)")
+    rodape(fig, "Cada ponto = média de 1 minuto (coletor adb, ~60 amostras). Minutos contados a partir de 5 s "
+                "depois do início do coletor.")
     salvar(fig, "F3_2_temperatura_e_frequencia.png")
-    gravar("frente3_series_coletor.csv", linhas_tab)
+
+    # Gráfico principal da frente 3: p95, frequência e temperatura no mesmo eixo de tempo
+    fig, axs = plt.subplots(3, 1, figsize=(9, 10), sharex=True)
+    nomes_cond = {"ar_t0": "0 threads", "ar_t6": "6 threads"}
+    folgas = {"p95": 4, "freq_gold": 180, "temp_bateria": 0.8}
+    for ax, nome in zip(axs, ("p95", "freq_gold", "temp_bateria")):
+        finais = []
+        for cond in sorted(series):
+            arr = np.array(series[cond][nome])
+            for v in arr:
+                ax.plot(minutos, v, "-", color=cores.get(cond, "gray"), alpha=0.25, lw=1)
+            m = np.nanmean(arr, axis=0)
+            ax.plot(minutos, m, "o-", color=cores.get(cond, "gray"), lw=2.2, ms=4)
+            finais.append((nomes_cond.get(cond, cond), minutos[-1], m[-1], cores.get(cond, "gray")))
+        rotulos_finais(ax, finais, folgas[nome])
+        ax.set_ylabel(metr[nome][0].replace(" dos núcleos", "\ndos núcleos").replace(" do tempo", "\ndo tempo"),
+                      fontsize=11)
+        ax.grid(alpha=0.3)
+        ax.tick_params(labelsize=10)
+    axs[0].axhline(1000 / 30, color="#999", ls=":", lw=1)
+    axs[0].text(1, 1000 / 30 + 0.6, "33,3 ms = 30 fps", fontsize=9, color="#666")
+    axs[1].axhline(2803.2, color="#999", ls=":", lw=1)
+    axs[1].text(1, 2803.2 - 140, "frequência máxima dos Gold (2803 MHz)", fontsize=9, color="#666")
+    axs[1].set_ylim(0, 3000)
+    axs[0].set_ylim(0, 70)
+    axs[2].set_xlabel("Minuto da execução (AR ligado o tempo todo)", fontsize=11)
+    axs[2].set_xticks([1, 3, 5, 7, 9, 11, 13, 15])
+    axs[2].set_xlim(0.5, 16.3)
+    fig.suptitle(TITULO_F3, fontsize=13)
+    rodape(fig, "Linha grossa = média das 2 repetições; linhas claras = cada repetição. p95 calculado em cada minuto "
+                "(página); frequência e temperatura = média de cada minuto (coletor adb).")
+    salvar(fig, "F3_3_frente3_principal.png")
+
+    # 1º minuto x 15º minuto
+    resumo = []
+    for cond, rep, r in longas:
+        q = quadros.get(r["run_id"], [])
+        t = np.array([a for a, _ in q]) / 1000.0
+        f = np.array([b for _, b in q])
+        aq = num(r["warmup_s"])
+        linha = {"condicao": cond, "rep": rep, "run_id": r["run_id"],
+                 "coletor_pasta": r["coletor"]["pasta"] if r["coletor"] else "",
+                 "p95_min1_ms": p95(f[(t >= aq) & (t < 60)]),
+                 "p95_min15_ms": p95(f[(t >= 840) & (t < 900)]),
+                 "p95_total_ms": num(r["frame_p95_ms"]),
+                 "bateria_ini": num(r["battery_start"]), "bateria_fim": num(r["battery_end"])}
+        linha["aumento_p95_ms"] = linha["p95_min15_ms"] - linha["p95_min1_ms"]
+        c = r["coletor"]
+        if c is not None:
+            # Minuto k do coletor: [início + 5 s + 60(k-1), início + 5 s + 60k]. Os 5 s
+            # aproximam o tempo entre iniciar o coletor e tocar em Iniciar.
+            for nome_min, k in (("min1", 1), ("min15", 15)):
+                ini = c["inicio"] + 5000 + 60000 * (k - 1)
+                fim = ini + 60000
+                def med(metrica, filtro):
+                    v = [x for (m, kk), pts in c["serie"].items() if m == metrica and filtro(kk)
+                         for tt, x in pts if ini <= tt <= fim and np.isfinite(x)]
+                    return float(np.mean(v)) if v else float("nan")
+                linha[f"temp_bateria_{nome_min}_c"] = med("bateria", lambda k_: k_ == "temperature_c")
+                linha[f"temp_gold_{nome_min}_c"] = med("temp_c", lambda k_: "gold" in k_)
+                linha[f"temp_silver_{nome_min}_c"] = med("temp_c", lambda k_: "silver" in k_)
+                linha[f"freq_gold_{nome_min}_mhz"] = med("cpu_freq_mhz", lambda k_: k_ in GOLD)
+                linha[f"freq_silver_{nome_min}_mhz"] = med("cpu_freq_mhz", lambda k_: k_ in SILVER)
+                linha[f"cpu_total_{nome_min}_pct"] = med("cpu_uso_pct", lambda k_: k_ == "total")
+                linha[f"descarga_{nome_min}_ma"] = -med("bateria_corrente_ma", lambda k_: k_ == "")
+        resumo.append(linha)
+        print(f"    {cond}_r{rep}: p95 {linha['p95_min1_ms']:.1f} -> {linha['p95_min15_ms']:.1f} ms; "
+              f"bateria {linha.get('temp_bateria_min1_c', float('nan')):.1f} -> "
+              f"{linha.get('temp_bateria_min15_c', float('nan')):.1f} °C; Gold "
+              f"{linha.get('freq_gold_min1_mhz', float('nan')):.0f} -> {linha.get('freq_gold_min15_mhz', float('nan')):.0f} MHz")
+    gravar("frente3_minuto1_x_minuto15.csv", resumo)
 
 
 # ---------------------------------------------------------------------------
@@ -577,6 +743,8 @@ def main():
 
     n = len(linhas) // 8
     nota_reps = f"Cada ponto = 1 execução de 120 s ({n} repetições por condição). Barras = média ± desvio padrão."
+
+    grafico_grupo(linhas)
 
     # Frente 1
     fig, ax = grafico_modos(linhas, "frame_p95_ms", "Frente 1 — p95 do tempo de quadro",
